@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" fill="none">
+  <defs>
+    <linearGradient id="shell" x1="202" y1="130" x2="1001" y2="625" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#283126"/>
+      <stop offset=".45" stop-color="#101710"/>
+      <stop offset="1" stop-color="#070b08"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="300" y1="170" x2="887" y2="556" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b0bf62" stop-opacity=".8"/>
+      <stop offset=".48" stop-color="#526b3b" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#29e6ca" stop-opacity=".7"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="377" y1="190" x2="850" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#243a2b" stop-opacity=".96"/>
+      <stop offset=".5" stop-color="#0d1712" stop-opacity=".94"/>
+      <stop offset="1" stop-color="#102b28" stop-opacity=".97"/>
+    </linearGradient>
+    <radialGradient id="reactor" cx="0" cy="0" r="1" gradientTransform="matrix(0 207 -207 0 612 337)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c8dc72" stop-opacity=".7"/>
+      <stop offset=".32" stop-color="#45d6a0" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#07100d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="104" y="70" width="992" height="616" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="soft" x="376" y="113" width="474" height="474" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <ellipse cx="600" cy="581" rx="436" ry="69" fill="#050906" opacity=".8"/>
+  <path d="m197 207 103-78h615l105 78v300l-105 82H300l-103-82V207Z" fill="#3ccf99" opacity=".18" filter="url(#glow)"/>
+  <path d="m214 213 98-70h576l99 70v273l-99 76H312l-98-76V213Z" fill="url(#shell)" stroke="url(#edge)" stroke-width="3"/>
+  <path d="m246 223 79-54h550l80 54v247l-80 61H325l-79-61V223Z" fill="#080e0a" stroke="#93a553" stroke-opacity=".4" stroke-width="2"/>
+  <path d="M325 169h550l80 54v247l-80 61H325l-79-61V223l79-54Z" fill="url(#glass)" stroke="#c1d871" stroke-opacity=".22"/>
+  <ellipse cx="600" cy="345" rx="248" ry="213" fill="url(#reactor)"/>
+  <circle cx="600" cy="344" r="174" stroke="#c0d766" stroke-opacity=".12" stroke-width="2"/>
+  <circle cx="600" cy="344" r="150" stroke="#7aab59" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 11"/>
+  <circle cx="600" cy="344" r="128" stroke="#36d9ac" stroke-opacity=".6" stroke-width="3"/>
+  <circle cx="600" cy="344" r="108" fill="#0a1510" stroke="#c1dd74" stroke-opacity=".36" stroke-width="2"/>
+  <circle cx="600" cy="344" r="91" fill="url(#reactor)"/>
+  <path d="m600 249 28 67 67 28-67 28-28 67-28-67-67-28 67-28 28-67Z" fill="#b9d86b" fill-opacity=".85" stroke="#ecffb1" stroke-width="2"/>
+  <path d="m600 277 17 50 50 17-50 17-17 50-17-50-50-17 50-17 17-50Z" fill="#e1ffd0" fill-opacity=".8"/>
+  <path d="M405 203h91m208 0h91M405 483h91m208 0h91" stroke="#b4d76a" stroke-opacity=".4" stroke-width="2"/>
+  <path d="M284 271h78m-78 14h52m482-14h78m-78 14h52M284 404h78m-78 14h52m482-14h78m-78 14h52" stroke="#54d9ad" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="287" cy="218" r="5" fill="#d4ed79"/><circle cx="912" cy="218" r="5" fill="#6ae8c3"/>
+  <circle cx="287" cy="488" r="5" fill="#6ae8c3"/><circle cx="912" cy="488" r="5" fill="#d4ed79"/>
+  <path d="M399 544h402l-37 41H436l-37-41Z" fill="#263124" stroke="#7e9650" stroke-opacity=".6"/>
+  <path d="M473 559h254" stroke="#c8df77" stroke-opacity=".36" stroke-width="3" stroke-linecap="round"/>
+  <path d="M434 191h332" stroke="#e3f5a0" stroke-opacity=".14" stroke-width="2"/>
+  <circle cx="600" cy="344" r="215" stroke="#b6de67" stroke-opacity=".08" stroke-width="1"/>
+  <g fill="#d7ec91" opacity=".8">
+    <circle cx="373" cy="311" r="2"/><circle cx="823" cy="367" r="2"/><circle cx="445" cy="444" r="2"/>
+    <circle cx="754" cy="248" r="2"/><circle cx="521" cy="189" r="2"/><circle cx="687" cy="508" r="2"/>
+  </g>
+</svg>

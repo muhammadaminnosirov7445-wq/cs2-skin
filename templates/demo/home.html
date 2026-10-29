@@ -1,0 +1,40 @@
+{% extends 'demo/base.html' %}
+{% load static %}
+{% block title %}Skinly — Premium Gaming Demo{% endblock %}
+{% block page_label %}Home{% endblock %}
+{% block content %}
+<section class="hero panel">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="pulse-dot"></span> THE NEXT LEVEL, NO STAKES</span>
+    <h1>Enter the<br><span class="gradient-text">demo arena.</span></h1>
+    <p>Explore handcrafted case openings, collections and game-mode simulations. Results are resolved securely by the server using demo-only credits; demo items have no cash or marketplace value.</p>
+    <div class="hero-actions"><a class="button button-primary" href="{% url 'store:demo_cases' %}">Explore cases <span>↗</span></a><a class="button button-quiet" href="{% url 'store:demo_battles' %}">Enter battle arena</a></div>
+    <div class="hero-stats"><div><strong>{{ case_count }}</strong><span>unique cases</span></div><div><strong>{{ item_count }}</strong><span>demo items</span></div><div><strong>100%</strong><span>no-stakes play</span></div></div>
+  </div>
+  <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-crystal" style="background: linear-gradient(145deg, var(--skinly-primary), var(--skinly-accent) 78%); color: var(--skinly-bg); box-shadow: 0 0 24px rgba(56, 139, 253, 0.24);">S</div><span class="floating-tag tag-a">DEMO MODE</span><span class="floating-tag tag-b">NO REAL VALUE</span></div>
+</section>
+<section class="feature-strip">
+    <a href="{% url 'store:demo_battles' %}" class="feature-tile"><span class="tile-icon" style="background: rgba(56, 139, 253, 0.18); color: var(--skinly-primary);">⚔</span><span><strong>Case battles</strong><small>Round-by-round simulation</small></span><span class="tile-arrow">↗</span></a>
+    <a href="{% url 'store:demo_upgrade' %}" class="feature-tile"><span class="tile-icon" style="background: rgba(46, 164, 79, 0.18); color: var(--skinly-accent);">↗</span><span><strong>Upgrade lab</strong><small>Cosmetic connection demo</small></span><span class="tile-arrow">↗</span></a>
+    <a href="{% url 'store:demo_contracts' %}" class="feature-tile"><span class="tile-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">◇</span><span><strong>Contracts</strong><small>Combine showcase items</small></span><span class="tile-arrow">↗</span></a>
+</section>
+<section class="content-section">
+  <div class="section-heading"><div><span class="eyebrow">CURATED FOR YOU</span><h2>Featured cases</h2></div><a class="text-link" href="{% url 'store:demo_cases' %}">All cases <span>→</span></a></div>
+  <div class="case-grid">
+    {% for case in featured_cases %}<a class="case-card panel" href="{% url 'store:demo_case_detail' slug=case.slug %}"><div class="case-art"><img src="{% static case.cover_image %}" loading="lazy" alt="{{ case.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'"><span class="case-category">{{ case.theme }}</span></div><div class="case-card-copy"><strong>{{ case.name }}</strong><span>{{ case.demo_price }} demo credits</span></div></a>
+    {% empty %}<div class="empty-state panel"><span>◇</span><h3>Demo cases are being prepared</h3><p>Run <code>python manage.py seed_demo_catalog</code> to create the local demo collection.</p></div>{% endfor %}
+  </div>
+</section>
+<section class="content-section">
+  <div class="section-heading"><div><span class="eyebrow">LATEST DROPS</span><h2>Fresh from the vault</h2></div><a class="text-link" href="{% url 'store:demo_cases' %}?sort=newest">Browse new cases <span>→</span></a></div>
+  <div class="case-grid">
+    {% for case in new_cases %}<a class="case-card panel compact-card" href="{% url 'store:demo_case_detail' slug=case.slug %}"><div class="case-art"><img src="{% static case.cover_image %}" loading="lazy" alt="{{ case.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'"></div><div class="case-card-copy"><strong>{{ case.name }}</strong><span>{{ case.demo_price }} demo credits</span></div></a>{% empty %}<div class="empty-state panel"><p>No demo cases yet.</p></div>{% endfor %}
+  </div>
+</section>
+<section class="content-section">
+  <div class="section-heading"><div><span class="eyebrow">SHOWCASE GALLERY</span><h2>Popular demo items</h2></div><a class="text-link" href="{% url 'store:demo_items' %}">View item gallery <span>→</span></a></div>
+  <div class="item-grid">
+    {% for item in popular_items %}<a class="item-card panel rarity-{{ item.rarity }}" href="{% url 'store:demo_item_detail' slug=item.slug %}"><img src="{% static item.image %}" loading="lazy" alt="{{ item.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'"><span class="rarity-label">{{ item.get_rarity_display }}</span><strong>{{ item.name }}</strong><small>{{ item.demo_value }} demo points · no cash value</small></a>{% empty %}<div class="empty-state panel"><p>Showcase items will appear here after catalog seeding.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

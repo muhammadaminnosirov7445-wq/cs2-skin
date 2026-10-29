@@ -1,0 +1,110 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Skin Upgrade Simulation — Skinly{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/upgrade.css' %}">{% endblock %}
+
+{% block content %}
+<main class="upgrade-page" data-fallback-image="{% static 'images/placeholder.svg' %}" data-skins-url="{% url 'store:api_upgrade_skins' %}" data-chance-url="{% url 'store:api_upgrade_chance' %}">
+    <section class="upgrade-hero">
+        <div class="upgrade-kicker"><span class="upgrade-live-dot"></span> FREE DEMO · NO ITEMS AT RISK</div>
+        <div class="upgrade-heading-row">
+            <div>
+                <h1 class="upgrade-title">Skin Upgrade <span>Simulation</span></h1>
+                <p class="upgrade-subtitle">Explore an illustrative upgrade chance using SKINLY catalog skins. Demo outcomes never change your real inventory or balance.</p>
+            </div>
+            <div class="simulation-stamp"><i data-lucide="shield-check"></i><span>SIMULATION ONLY</span></div>
+        </div>
+    </section>
+
+    <section class="upgrade-workbench" aria-label="Skin upgrade demo">
+        <div class="upgrade-skin-panel" data-panel="source">
+            <div class="panel-topline"><span class="panel-index">01</span><span class="panel-label">YOUR SKIN <small>DEMO ITEM</small></span></div>
+            <div class="skin-preview" id="source-preview">
+                <div class="preview-glow"></div>
+                <img id="source-image" alt="" src="{% static 'images/placeholder.svg' %}">
+                <span class="skin-empty">No source selected</span>
+            </div>
+            <button type="button" class="choose-skin-button" data-choose-role="source">Choose Your Skin <i data-lucide="search"></i></button>
+            <div class="skin-details">
+                <div><h2 id="source-name">Select your demo skin</h2><p id="source-rarity">Choose a catalog skin</p></div>
+                <strong id="source-price">—</strong>
+            </div>
+            <div class="skin-wear" id="source-wear">No source item selected · simulation only</div>
+        </div>
+
+        <div class="upgrade-core">
+            <div class="chance-gauge" id="chance-gauge" style="--chance:0;--chance-color:#64748b" role="img" aria-label="Chance unavailable until both skins are selected">
+                <span class="gauge-label gauge-label-75">75%</span>
+                <span class="gauge-label gauge-label-50">50%</span>
+                <span class="gauge-label gauge-label-25">25%</span>
+                <span class="gauge-label gauge-label-10">10%</span>
+                <svg class="gauge-svg" viewBox="0 0 180 180" aria-hidden="true">
+                    <circle class="gauge-track" cx="90" cy="90" r="75"></circle>
+                    <circle class="gauge-progress" id="gauge-progress" cx="90" cy="90" r="75"></circle>
+                </svg>
+                <div class="gauge-needle" id="gauge-needle" aria-hidden="true"><span></span></div>
+                <span class="gauge-hub" aria-hidden="true"></span>
+                <div class="gauge-center"><span>DEMO CHANCE</span><strong id="chance-value">—</strong><small>ILLUSTRATIVE</small></div>
+                <span class="gauge-result-icon gauge-result-success" aria-hidden="true">✓</span>
+                <span class="gauge-result-icon gauge-result-fail" aria-hidden="true">✕</span>
+            </div>
+            <p class="chance-formula">Demo chance = source skin price ÷ target skin price × 100, capped at 100%. Prices are checked from the live catalog.</p>
+            <div class="upgrade-result" id="upgrade-result" aria-live="polite">
+                <span class="result-eyebrow">SIMULATION RESULT</span>
+                <strong id="result-title">Choose your skins</strong>
+                <span id="result-message">Select both skins to calculate the free simulation chance.</span>
+            </div>
+            <button type="button" class="try-upgrade" id="try-upgrade" disabled>
+                <i data-lucide="sparkles"></i><span>Try Demo</span>
+            </button>
+            <button type="button" class="reset-upgrade" id="reset-upgrade"><i data-lucide="rotate-ccw"></i> Reset demo & history</button>
+        </div>
+
+        <div class="upgrade-skin-panel target-panel" data-panel="target">
+            <div class="panel-topline"><span class="panel-index">02</span><span class="panel-label">TARGET SKIN <small>DEMO ITEM</small></span></div>
+            <div class="skin-preview" id="target-preview">
+                <div class="preview-glow"></div>
+                <img id="target-image" alt="" src="{% static 'images/placeholder.svg' %}">
+                <span class="skin-empty">No target selected</span>
+            </div>
+            <button type="button" class="choose-skin-button target-choose-button" data-choose-role="target">Choose Target Skin <i data-lucide="search"></i></button>
+            <div class="skin-details">
+                <div><h2 id="target-name">Select a target skin</h2><p id="target-rarity">Choose a catalog skin</p></div>
+                <strong id="target-price">—</strong>
+            </div>
+            <div class="skin-wear" id="target-wear">No target item selected · simulation only</div>
+        </div>
+    </section>
+
+    <section class="catalog-section">
+        <div class="section-heading">
+            <div><span class="section-eyebrow">PICK YOUR PAIR</span><h2>Choose demo skins</h2></div>
+            <span class="catalog-count" id="catalog-count">Loading catalog…</span>
+        </div>
+        <div class="catalog-filters">
+            <label class="catalog-search"><i data-lucide="search"></i><span class="sr-only">Search by name</span><input type="search" id="skin-search" placeholder="Search skins by name or weapon…" maxlength="100"></label>
+            <label><span class="sr-only">Filter by weapon</span><select id="weapon-filter"><option value="">All weapons</option></select></label>
+            <label class="price-filter"><span class="sr-only">Minimum price</span><input type="number" id="min-price" min="0" step="0.01" placeholder="Min $"></label>
+            <label class="price-filter"><span class="sr-only">Maximum price</span><input type="number" id="max-price" min="0" step="0.01" placeholder="Max $"></label>
+            <button type="button" class="filter-submit" id="filter-skins">Filter</button>
+        </div>
+        <div class="catalog-status" id="catalog-status" role="status" aria-live="polite">Loading catalog skins…</div>
+        <div class="demo-skin-grid" id="demo-skin-grid"></div>
+    </section>
+
+    <section class="history-section">
+        <div class="section-heading">
+            <div><span class="section-eyebrow">LOCAL TO THIS BROWSER</span><h2>Recent demo activity</h2></div>
+            <span class="history-note">Simulation history · never stored as marketplace activity</span>
+        </div>
+        <div id="history-error" class="history-error" role="alert" hidden></div>
+        <div class="history-list" id="history-list" aria-live="polite">
+            <div class="history-empty"><span class="history-empty-icon"><i data-lucide="history"></i></span><strong>No demo attempts yet</strong><span>Your simulation results will appear here.</span></div>
+        </div>
+    </section>
+
+    <aside class="simulation-notice"><i data-lucide="info"></i><p><strong>Free simulation only.</strong> This feature uses virtual selections and illustrative probabilities. A simulated success is not an item reward, Steam trade, or inventory change. No real skins, money, deposits, or paid attempts are involved.</p></aside>
+</main>
+<script src="{% static 'js/upgrade.js' %}" defer></script>
+{% endblock %}

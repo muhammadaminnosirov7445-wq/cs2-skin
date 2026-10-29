@@ -1,0 +1,769 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.title }} — Skinly CS2 Bozori{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+    <!-- Breadcrumb Navigation -->
+    <nav class="flex items-center space-x-2 text-xs text-slate-500">
+        <a href="{% url 'store:index' %}" class="hover:text-cyan-400 transition-colors" data-i18n="nav_catalog">Katalog</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>
+        {% if product.category %}
+        <a href="{% url 'store:index' %}?category={{ product.category.slug }}" class="hover:text-cyan-400 transition-colors">{{ product.category.name }}</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>
+        {% endif %}
+        <span class="text-slate-400 font-mono">{{ product.weapon_type }}</span>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>
+        <span class="text-cyan-300 font-semibold truncate">{{ product.title }}</span>
+    </nav>
+
+    <!-- Main Grid: 3D/2D Viewer (Left) & Metadata/Purchase (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Left: Skin Visual Showcase (2D / 3D Switcher) -->
+        <div class="lg:col-span-7 space-y-4">
+            <div class="relative rounded-3xl overflow-hidden glass-panel border p-1 transition-all duration-500
+                {% if product.rarity == 'extraordinary' %} rarity-extraordinary
+                {% elif product.rarity == 'covert' %} rarity-covert
+                {% elif product.rarity == 'classified' %} rarity-classified
+                {% elif product.rarity == 'restricted' %} rarity-restricted
+                {% else %} rarity-milspec {% endif %}">
+
+                <!-- Mode Switch Tabs -->
+                <div class="absolute top-4 left-4 z-20 flex items-center space-x-1.5 p-1 rounded-xl bg-black/70 backdrop-blur-md border border-white/10">
+                    <button id="btn-tab-2d" onclick="switchViewerTab('2d')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-cyan-400 text-black flex items-center space-x-1.5">
+                        <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                        <span>2D Ko'rinish</span>
+                    </button>
+                    <button id="btn-tab-3d" onclick="switchViewerTab('3d')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center space-x-1.5">
+                        <i data-lucide="box" class="w-3.5 h-3.5 text-purple-400"></i>
+                        <span>3D Interaktiv</span>
+                        <span class="px-1.5 py-0.2 text-[8px] bg-purple-500/30 text-purple-300 font-mono rounded">360°</span>
+                    </button>
+                </div>
+
+                <!-- Badges (Top Right) -->
+                <div class="absolute top-4 right-4 z-20 flex items-center space-x-2">
+                    {% if product.stattrak %}
+                    <span class="px-3 py-1 rounded-lg text-[10px] font-mono font-bold badge-stattrak uppercase tracking-wider shadow-lg">
+                        StatTrak™
+                    </span>
+                    {% endif %}
+                    <span class="px-3 py-1 rounded-lg text-xs font-semibold bg-black/60 text-slate-200 border border-white/10 backdrop-blur-md">
+                        {{ product.wear_condition }}
+                    </span>
+                </div>
+
+                <!-- 2D High-Res View Container -->
+                <div id="view-container-2d" class="relative aspect-square w-full rounded-[22px] overflow-hidden bg-gradient-to-b from-[#10152e] to-[#070914] flex items-center justify-center p-8 group">
+                    <!-- Background holographic ambient light -->
+                    <div class="absolute inset-0 bg-radial-glow opacity-30 pointer-events-none"></div>
+
+                    <img id="detail-main-image" src="{{ product.display_image }}" alt="{{ product.title }}"
+                         class="w-4/5 h-4/5 object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-700 select-none">
+
+                    <!-- Pattern Template / Paint Seed Info Badge -->
+                    <div class="absolute bottom-4 left-4 z-10 flex items-center space-x-2">
+                        <div class="px-3 py-1 rounded-lg bg-black/70 border border-indigo-500/30 backdrop-blur-md text-[10px] font-mono text-slate-300">
+                            <span class="text-slate-500">Pattern Template:</span>
+                            <span class="text-cyan-400 font-bold ml-1">#{{ product.pattern_template }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Favorite toggle button -->
+                    <button onclick="toggleFavorite('{{ product.id }}', '{{ product.title|escapejs }}', '{{ product.retail_price }}', '{{ product.display_image|escapejs }}')"
+                            data-id="{{ product.id }}"
+                            class="btn-favorite absolute bottom-4 right-4 p-2.5 rounded-xl bg-black/70 border border-white/10 backdrop-blur-md text-slate-400 hover:text-rose-400 transition-all z-10">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- 3D Interactive WebGL Orbit Container -->
+                <div id="view-container-3d" class="hidden relative aspect-square w-full rounded-[22px] overflow-hidden bg-[#070914] flex flex-col items-center justify-center">
+                    <canvas id="three-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+                    <!-- 3D Controls Overlay Bar -->
+                    <div class="absolute bottom-4 inset-x-4 z-20 flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-xs">
+                        <div class="flex items-center space-x-2 text-[11px] text-slate-400">
+                            <i data-lucide="move-3d" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Sichqoncha bilan 360° aylantiring va yaqinlashtiring</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <button id="btn-toggle-rotate" type="button" onclick="toggle3DAutoRotate()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-semibold text-slate-200 flex items-center space-x-1">
+                                <i data-lucide="rotate-cw" class="w-3 h-3 text-cyan-400"></i>
+                                <span id="label-auto-rotate">Avto aylanish: ON</span>
+                            </button>
+                            <button type="button" onclick="reset3DCamera()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-semibold text-slate-200">
+                                Asliga qaytarish
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3D Integration Status Badge -->
+                    <div class="absolute top-16 left-4 z-10 px-3 py-1 rounded-lg bg-indigo-950/80 border border-indigo-500/30 backdrop-blur-md text-[10px] font-mono text-indigo-300">
+                        {% if product.model_3d_file or product.model_3d_url %}
+                        <span>● CS2 3D Model GLTF/GLB yuklandi</span>
+                        {% else %}
+                        <span>● Interaktiv 3D tekshiruv moduli (GLTF/GLB qo'llab-quvvatlanadi)</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Trade & Delivery Guarantees -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="p-3.5 rounded-2xl glass-panel border border-indigo-500/20 text-center space-y-1">
+                    <i data-lucide="shield-check" class="w-4 h-4 mx-auto text-emerald-400"></i>
+                    <p class="text-xs font-bold text-white">Trade Lock Yo'q</p>
+                    <p class="text-[10px] text-slate-500">100% zudlik bilan yuboriladi</p>
+                </div>
+                <div class="p-3.5 rounded-2xl glass-panel border border-indigo-500/20 text-center space-y-1">
+                    <i data-lucide="zap" class="w-4 h-4 mx-auto text-cyan-400"></i>
+                    <p class="text-xs font-bold text-white">2-5 Daqiqa</p>
+                    <p class="text-[10px] text-slate-500">Avtomatlashtirilgan bot</p>
+                </div>
+                <div class="p-3.5 rounded-2xl glass-panel border border-indigo-500/20 text-center space-y-1">
+                    <i data-lucide="bot" class="w-4 h-4 mx-auto text-purple-400"></i>
+                    <p class="text-xs font-bold text-white">24/7 Xizmat</p>
+                    <p class="text-[10px] text-slate-500">Steam Trade Offer kafolati</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Skin Details & Purchase Operations -->
+        <div class="lg:col-span-5 space-y-5">
+            <div class="glass-panel rounded-3xl p-6 sm:p-7 border border-indigo-500/25 space-y-6">
+
+                <!-- Skin Header & Title -->
+                <div>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider" style="color: {{ product.rarity_color }};">
+                            ● {{ product.get_rarity_display }}
+                        </span>
+                        <span class="text-slate-600">&middot;</span>
+                        <span class="text-xs text-slate-500 font-mono">{{ product.weapon_type }}</span>
+                        <span class="text-slate-600">&middot;</span>
+                        <span class="text-xs text-slate-500 font-mono">ID: #{{ product.id }}</span>
+                    </div>
+
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                        {% if product.stattrak %}<span class="text-csstattrak">StatTrak™</span> {% endif %}{{ product.title }}
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-1 font-medium">{{ product.wear_condition }}</p>
+                </div>
+
+                <!-- Float Value Spectrum Bar -->
+                <div class="p-4 rounded-2xl bg-csdark-950/80 border border-indigo-500/25 space-y-3">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[11px]">Float Value</span>
+                        <span class="font-mono text-sm font-extrabold text-cyan-400">{{ product.float_value|floatformat:4 }}</span>
+                    </div>
+
+                    <div class="relative w-full h-2 rounded-full float-spectrum-bar overflow-visible">
+                        <div class="absolute -top-1 w-2.5 h-4 bg-white rounded shadow-lg shadow-white/60 -translate-x-1/2 border border-black/40"
+                             style="left: {{ product.float_percentage }}%;"></div>
+                    </div>
+
+                    <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                        <span>0.00 FN</span>
+                        <span>0.07 MW</span>
+                        <span>0.15 FT</span>
+                        <span>0.38 WW</span>
+                        <span>1.00 BS</span>
+                    </div>
+                </div>
+
+                <!-- Price & Stock Status -->
+                <div class="p-4 rounded-2xl bg-csdark-950/80 border border-indigo-500/25 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] text-slate-400 block font-semibold">Sotuv narxi</span>
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-black text-white font-mono">${{ product.retail_price }}</span>
+                            {% if lowest_price < product.retail_price %}
+                            <span class="text-xs text-slate-500 line-through font-mono">${{ lowest_price }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        {% if product.stock > 0 %}
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Mavjud ({{ product.stock }} ta)</span>
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                            Sotilgan (Tugagan)
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Seller Reputation Card -->
+                <div class="p-4 rounded-2xl bg-indigo-500/[0.04] border border-indigo-500/20 space-y-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Sotuvchi Ma'lumotlari</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            {% if seller %}
+                            <div class="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 p-[1.5px]">
+                                <img src="{{ seller_profile.display_avatar }}" alt="{{ seller.username }}"
+                                     class="w-full h-full object-cover rounded-[10px] bg-[#070914]"
+                                     onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed={{ seller.username }}&backgroundColor=0b0e1d'">
+                                {% if product.seller_is_verified %}
+                                <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-cyan-400 text-black flex items-center justify-center">
+                                    <i data-lucide="check" class="w-2.5 h-2.5 stroke-[3]"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'store:seller_profile' username=seller.username %}" class="text-xs font-bold text-white hover:text-cyan-400 transition-colors flex items-center space-x-1.5">
+                                    <span>{{ seller.username }}</span>
+                                    {% if product.seller_is_verified %}
+                                    <i data-lucide="badge-check" class="w-3.5 h-3.5 text-cyan-400" title="Tasdiqlangan Sotuvchi"></i>
+                                    {% endif %}
+                                </a>
+                                <div class="flex items-center space-x-2 text-[10px] text-slate-400 mt-0.5">
+                                    <span class="flex items-center text-amber-400">
+                                        <i data-lucide="star" class="w-3 h-3 fill-amber-400 mr-0.5"></i>
+                                        {{ seller_rating }} ({{ seller_reviews_count }} sharh)
+                                    </span>
+                                    <span>&middot;</span>
+                                    <span>{{ seller_profile.sales_count|default:"0" }} sotuv</span>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[1.5px] flex items-center justify-center">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-cyan-400"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-white flex items-center space-x-1">
+                                    <span>Skinly Vault (Official)</span>
+                                    <i data-lucide="badge-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                </span>
+                                <p class="text-[10px] text-slate-400">Rasmiy do'kon inventari &middot; 100% Kafolat</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if seller %}
+                        <a href="{% url 'store:seller_profile' username=seller.username %}" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all">
+                            Profil
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Purchase Buttons -->
+                <div class="pt-2 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="addToCart('{{ product.id }}', '{{ product.title|escapejs }}', '{{ product.retail_price }}', '{{ product.display_image|escapejs }}')"
+                                class="py-3 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-indigo-500/30 text-cyan-400 hover:text-cyan-300 text-xs font-bold transition-all flex items-center justify-center space-x-2">
+                            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                            <span>Savatchaga</span>
+                        </button>
+
+                        <button type="button" onclick="buySkin('{{ product.id }}', this)"
+                                data-product-id="{{ product.id }}"
+                                data-price="{{ product.retail_price }}"
+                                class="btn-buy-skin btn-gold py-3 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/25">
+                            <i data-lucide="zap" class="w-4 h-4 fill-black"></i>
+                            <span>Sotib olish (${{ product.retail_price }})</span>
+                        </button>
+                    </div>
+
+                    <!-- Direct Trade URL Checkout Form -->
+                    <form action="{% url 'store:checkout_product' slug=product.slug %}" method="POST" class="pt-4 border-t border-white/[0.06] space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="quantity" value="1">
+
+                        <h3 class="text-xs font-semibold text-slate-300 flex items-center">
+                            <i data-lucide="send" class="w-3.5 h-3.5 mr-1.5 text-cyan-400"></i>
+                            Yoki to'g'ridan-to'g'ri Steam Trade taklifi orqali xarid qiling:
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <input type="text" name="full_name" required placeholder="Ismingiz" value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}"
+                                   class="w-full bg-csdark-950 border border-indigo-500/25 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 placeholder-slate-600">
+                            <input type="tel" name="phone" required placeholder="+998..." value="{% if user.is_authenticated %}{{ user.profile.phone|default:'' }}{% endif %}"
+                                   class="w-full bg-csdark-950 border border-indigo-500/25 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 placeholder-slate-600">
+                        </div>
+
+                        <input type="url" name="steam_trade_url" required value="{{ user_trade_url }}"
+                               placeholder="https://steamcommunity.com/tradeoffer/new/?partner=..."
+                               class="w-full bg-csdark-950 border border-indigo-500/25 rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400">
+
+                        <button type="submit"
+                                class="w-full py-3 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-cyan-300 font-bold text-xs transition-all flex items-center justify-center space-x-2">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Steam Trade Offer orqali buyurtma berish</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Section: Price History and Analytics -->
+    <section class="rounded-3xl glass-panel p-6 sm:p-8 border border-indigo-500/25 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-cyan-400"></i>
+                    <span>Narxlar Tarixi va Bozor Tahlili</span>
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">Ushbu skin bo'yicha real xaridlar va e'lonlar dinamikasi</p>
+            </div>
+
+            <!-- Time Filter Range Pills -->
+            <div class="flex items-center space-x-1.5 p-1 rounded-xl bg-csdark-950 border border-indigo-500/30">
+                <button type="button" onclick="loadPriceHistory('24h', this)" class="price-filter-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">24 Soat</button>
+                <button type="button" onclick="loadPriceHistory('7d', this)" class="price-filter-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">7 Kun</button>
+                <button type="button" onclick="loadPriceHistory('30d', this)" class="price-filter-btn active-filter px-3 py-1 rounded-lg text-xs font-bold bg-cyan-400 text-black transition-all">30 Kun</button>
+                <button type="button" onclick="loadPriceHistory('1y', this)" class="price-filter-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">1 Yil</button>
+            </div>
+        </div>
+
+        <!-- Metrics Overview Strip -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            <div class="p-3.5 rounded-xl bg-csdark-950/70 border border-indigo-500/20">
+                <span class="text-[10px] text-slate-500 uppercase font-mono block">Joriy Sotuv Narxi</span>
+                <span id="chart-stat-current" class="text-xl font-extrabold text-white font-mono">${{ product.retail_price }}</span>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-csdark-950/70 border border-indigo-500/20">
+                <span class="text-[10px] text-slate-500 uppercase font-mono block">Eng Past Narx</span>
+                <span id="chart-stat-lowest" class="text-xl font-extrabold text-emerald-400 font-mono">${{ lowest_price }}</span>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-csdark-950/70 border border-indigo-500/20">
+                <span class="text-[10px] text-slate-500 uppercase font-mono block">Eng Yuqori Narx</span>
+                <span id="chart-stat-highest" class="text-xl font-extrabold text-white font-mono">${{ highest_price }}</span>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-csdark-950/70 border border-indigo-500/20">
+                <span class="text-[10px] text-slate-500 uppercase font-mono block">Narx O'zgarishi</span>
+                <span id="chart-stat-change" class="text-xl font-extrabold text-cyan-400 font-mono">0.0%</span>
+            </div>
+        </div>
+
+        <!-- Canvas Chart Area -->
+        <div class="relative w-full h-64 sm:h-72 rounded-2xl bg-[#070914] border border-white/[0.06] p-4 flex items-center justify-center">
+            <canvas id="price-history-canvas" class="w-full h-full"></canvas>
+            <div id="chart-loading" class="absolute inset-0 bg-[#070914]/80 backdrop-blur-sm flex items-center justify-center space-x-2 text-cyan-400 text-xs font-semibold hidden">
+                <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+                <span>Yuklanmoqda...</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Alternative Offers & Similar Listings Table -->
+    {% if alternative_offers %}
+    <section class="space-y-4">
+        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="layers" class="w-5 h-5 text-indigo-400"></i>
+            <span>Ushbu Qurol Bo'yicha Boshqa Takliflar</span>
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-indigo-500/20 text-cyan-300">
+                {{ alternative_offers.count }}
+            </span>
+        </h2>
+
+        <div class="overflow-x-auto rounded-2xl glass-panel border border-indigo-500/20">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="text-[10px] uppercase font-bold text-slate-400 bg-csdark-950/60 border-b border-white/[0.06]">
+                    <tr>
+                        <th class="p-3.5">Skin & Holati</th>
+                        <th class="p-3.5">Float</th>
+                        <th class="p-3.5">Sotuvchi</th>
+                        <th class="p-3.5">Narx</th>
+                        <th class="p-3.5 text-right">Amal</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/[0.04]">
+                    {% for alt in alternative_offers %}
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                        <td class="p-3.5 flex items-center space-x-3">
+                            <img src="{{ alt.display_image }}" alt="{{ alt.title }}" class="w-10 h-10 object-contain bg-csdark-950 rounded-lg p-1">
+                            <div>
+                                <a href="{% url 'store:product_detail' slug=alt.slug %}" class="font-bold text-white hover:text-cyan-400 transition-colors">
+                                    {{ alt.title }}
+                                </a>
+                                <p class="text-[10px] text-slate-500">{{ alt.wear_condition }}</p>
+                            </div>
+                        </td>
+                        <td class="p-3.5 font-mono text-cyan-300">{{ alt.float_value|floatformat:4 }}</td>
+                        <td class="p-3.5">
+                            {% if alt.seller %}
+                            <a href="{% url 'store:seller_profile' username=alt.seller.username %}" class="text-slate-300 hover:text-cyan-400 flex items-center space-x-1">
+                                <span>{{ alt.seller.username }}</span>
+                                {% if alt.seller_is_verified %}
+                                <i data-lucide="badge-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                {% endif %}
+                            </a>
+                            {% else %}
+                            <span class="text-slate-400">Skinly Vault</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5 font-extrabold font-mono text-white text-sm">${{ alt.retail_price }}</td>
+                        <td class="p-3.5 text-right space-x-1.5">
+                            <a href="{% url 'store:product_detail' slug=alt.slug %}" class="inline-flex px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold transition-all">
+                                Ko'rish
+                            </a>
+                            <button onclick="buySkin('{{ alt.id }}', this)"
+                                    data-product-id="{{ alt.id }}"
+                                    data-price="{{ alt.retail_price }}"
+                                    class="inline-flex px-3 py-1.5 rounded-lg btn-gold text-xs font-bold shadow-sm">
+                                Xarid
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Similar Skins Section -->
+    {% if related_skins %}
+    <section class="space-y-4 pt-4">
+        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i>
+            <span>Tavsiya Etilgan O'xshash Skinlar</span>
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {% for item in related_skins %}
+            <a href="{% url 'store:product_detail' slug=item.slug %}" class="group rounded-2xl glass-panel luxury-card p-3 border border-indigo-500/20 block">
+                <div class="aspect-square w-full rounded-xl overflow-hidden bg-gradient-to-b from-[#111736] to-[#070914] flex items-center justify-center p-2">
+                    <img src="{{ item.display_image }}" alt="{{ item.title }}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="mt-2.5">
+                    <h4 class="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors truncate">{{ item.title }}</h4>
+                    <p class="text-xs font-extrabold text-cyan-400 font-mono mt-1">${{ item.retail_price }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+
+<!-- Three.js + OrbitControls CDNs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// --- Recently Viewed Skin Tracking ---
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        let recent = JSON.parse(localStorage.getItem('skinly_recent_views') || '[]');
+        const currentSkin = {
+            id: '{{ product.id }}',
+            title: '{{ product.title|escapejs }}',
+            slug: '{{ product.slug|escapejs }}',
+            price: '{{ product.retail_price }}',
+            image: '{{ product.display_image|escapejs }}',
+            rarity: '{{ product.rarity }}',
+            wear: '{{ product.wear_condition|escapejs }}'
+        };
+        // Remove if exists and prepend
+        recent = recent.filter(item => String(item.id) !== String(currentSkin.id));
+        recent.unshift(currentSkin);
+        if (recent.length > 8) recent = recent.slice(0, 8);
+        localStorage.setItem('skinly_recent_views', JSON.stringify(recent));
+    } catch(e) {}
+
+    // Initialize Price History Chart
+    loadPriceHistory('30d');
+});
+
+// --- Tab Switcher: 2D vs 3D ---
+let threeInitialized = false;
+let threeRenderer, threeScene, threeCamera, threeControls, threeMesh;
+let autoRotate = true;
+
+function switchViewerTab(tab) {
+    const c2d = document.getElementById('view-container-2d');
+    const c3d = document.getElementById('view-container-3d');
+    const b2d = document.getElementById('btn-tab-2d');
+    const b3d = document.getElementById('btn-tab-3d');
+
+    if (tab === '3d') {
+        c2d.classList.add('hidden');
+        c3d.classList.remove('hidden');
+        b3d.classList.add('bg-cyan-400', 'text-black');
+        b3d.classList.remove('text-slate-400');
+        b2d.classList.remove('bg-cyan-400', 'text-black');
+        b2d.classList.add('text-slate-400');
+
+        if (!threeInitialized) {
+            initThreeJSViewer();
+            threeInitialized = true;
+        }
+    } else {
+        c3d.classList.add('hidden');
+        c2d.classList.remove('hidden');
+        b2d.classList.add('bg-cyan-400', 'text-black');
+        b2d.classList.remove('text-slate-400');
+        b3d.classList.remove('bg-cyan-400', 'text-black');
+        b3d.classList.add('text-slate-400');
+    }
+}
+
+function initThreeJSViewer() {
+    const canvas = document.getElementById('three-canvas');
+    const container = document.getElementById('view-container-3d');
+    if (!canvas || !container) return;
+
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    threeScene = new THREE.Scene();
+    threeScene.background = new THREE.Color(0x070914);
+
+    threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    threeCamera.position.set(0, 0, 5.5);
+
+    threeRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    threeRenderer.setSize(width, height);
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+    threeControls.enableDamping = true;
+    threeControls.dampingFactor = 0.05;
+    threeControls.autoRotate = autoRotate;
+    threeControls.autoRotateSpeed = 2.0;
+
+    // CS2 Holographic Studio Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    threeScene.add(ambientLight);
+
+    const cyanLight = new THREE.DirectionalLight(0x06b6d4, 1.8);
+    cyanLight.position.set(5, 5, 5);
+    threeScene.add(cyanLight);
+
+    const purpleLight = new THREE.DirectionalLight(0xa855f7, 1.6);
+    purpleLight.position.set(-5, -3, 3);
+    threeScene.add(purpleLight);
+
+    const goldBackLight = new THREE.DirectionalLight(0xf59e0b, 0.8);
+    goldBackLight.position.set(0, -5, -4);
+    threeScene.add(goldBackLight);
+
+    // Create 3D Holographic Weapon Stand with Skin Texture
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+        '{{ product.display_image|escapejs }}',
+        function(texture) {
+            texture.generateMipmaps = true;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+
+            const geometry = new THREE.BoxGeometry(3.6, 2.2, 0.15);
+            const material = new THREE.MeshStandardMaterial({
+                map: texture,
+                metalness: 0.65,
+                roughness: 0.25,
+                transparent: true
+            });
+            threeMesh = new THREE.Mesh(geometry, material);
+            threeScene.add(threeMesh);
+        },
+        undefined,
+        function() {
+            // Fallback Mesh
+            const geometry = new THREE.BoxGeometry(3.6, 2.2, 0.15);
+            const material = new THREE.MeshStandardMaterial({ color: 0x6366f1, metalness: 0.7, roughness: 0.3 });
+            threeMesh = new THREE.Mesh(geometry, material);
+            threeScene.add(threeMesh);
+        }
+    );
+
+    // Subtle 3D Grid Pedestal
+    const gridHelper = new THREE.GridHelper(6, 12, 0x06b6d4, 0x1e2133);
+    gridHelper.position.y = -1.6;
+    threeScene.add(gridHelper);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        threeControls.update();
+        threeRenderer.render(threeScene, threeCamera);
+    }
+    animate();
+
+    window.addEventListener('resize', function() {
+        if (!container) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        threeCamera.aspect = w / h;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(w, h);
+    });
+}
+
+function toggle3DAutoRotate() {
+    autoRotate = !autoRotate;
+    if (threeControls) {
+        threeControls.autoRotate = autoRotate;
+    }
+    const lbl = document.getElementById('label-auto-rotate');
+    if (lbl) lbl.innerText = `Avto aylanish: ${autoRotate ? 'ON' : 'OFF'}`;
+}
+
+function reset3DCamera() {
+    if (threeCamera && threeControls) {
+        threeCamera.position.set(0, 0, 5.5);
+        threeControls.target.set(0, 0, 0);
+        threeControls.update();
+    }
+}
+
+// --- Interactive Price History Chart ---
+let currentChartData = null;
+
+async function loadPriceHistory(range, buttonEl) {
+    if (buttonEl) {
+        document.querySelectorAll('.price-filter-btn').forEach(btn => {
+            btn.classList.remove('active-filter', 'bg-cyan-400', 'text-black', 'font-bold');
+            btn.classList.add('text-slate-400');
+        });
+        buttonEl.classList.add('active-filter', 'bg-cyan-400', 'text-black', 'font-bold');
+        buttonEl.classList.remove('text-slate-400');
+    }
+
+    const loader = document.getElementById('chart-loading');
+    if (loader) loader.classList.remove('hidden');
+
+    try {
+        const res = await fetch(`/api/product/{{ product.slug }}/price-history/?range=${range}`);
+        const data = await res.json();
+        if (data.success) {
+            currentChartData = data;
+            renderCanvasChart(data);
+
+            // Update Metric Cards
+            const curEl = document.getElementById('chart-stat-current');
+            const lowEl = document.getElementById('chart-stat-lowest');
+            const highEl = document.getElementById('chart-stat-highest');
+            const chgEl = document.getElementById('chart-stat-change');
+
+            if (curEl) curEl.innerText = `$${data.current_price.toFixed(2)}`;
+            if (lowEl) lowEl.innerText = `$${data.lowest_price.toFixed(2)}`;
+            if (highEl) highEl.innerText = `$${data.highest_price.toFixed(2)}`;
+            if (chgEl) {
+                chgEl.innerText = `${data.diff_pct_formatted} (${data.price_diff_formatted})`;
+                chgEl.className = data.is_positive ? 'text-xl font-extrabold text-emerald-400 font-mono' : 'text-xl font-extrabold text-rose-400 font-mono';
+            }
+        }
+    } catch(e) {
+        console.error('Error fetching price history:', e);
+    } finally {
+        if (loader) loader.classList.add('hidden');
+    }
+}
+
+function renderCanvasChart(data) {
+    const canvas = document.getElementById('price-history-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * (window.devicePixelRatio || 1);
+    canvas.height = rect.height * (window.devicePixelRatio || 1);
+    ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const prices = data.prices;
+    const labels = data.labels;
+    if (!prices || prices.length === 0) return;
+
+    const padLeft = 50;
+    const padRight = 30;
+    const padTop = 25;
+    const padBottom = 35;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+
+    const minP = Math.min(...prices) * 0.98;
+    const maxP = Math.max(...prices) * 1.02;
+    const range = (maxP - minP) || 1;
+
+    // Draw grid horizontal lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px JetBrains Mono, monospace';
+
+    const gridLines = 4;
+    for (let i = 0; i <= gridLines; i++) {
+        const y = padTop + (chartH / gridLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, y);
+        ctx.lineTo(w - padRight, y);
+        ctx.stroke();
+
+        const priceLabel = (maxP - (range / gridLines) * i).toFixed(1);
+        ctx.fillText(`$${priceLabel}`, 10, y + 4);
+    }
+
+    // Calculate points
+    const points = prices.map((p, idx) => {
+        const x = padLeft + (chartW / (prices.length - 1 || 1)) * idx;
+        const y = padTop + chartH - ((p - minP) / range) * chartH;
+        return { x, y, price: p, label: labels[idx] };
+    });
+
+    // Gradient Area Fill under Curve
+    const grad = ctx.createLinearGradient(0, padTop, 0, h - padBottom);
+    grad.addColorStop(0, 'rgba(6, 182, 212, 0.35)');
+    grad.addColorStop(0.7, 'rgba(99, 102, 241, 0.12)');
+    grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, h - padBottom);
+    points.forEach(pt => ctx.lineTo(pt.x, pt.y));
+    ctx.lineTo(points[points.length - 1].x, h - padBottom);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Chart Stroke Line
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#06b6d4';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Draw Data Dots & Labels
+    points.forEach((pt, idx) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // X-axis label
+        if (idx === 0 || idx === points.length - 1 || idx % Math.ceil(points.length / 4) === 0) {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(pt.label, pt.x - 12, h - 12);
+        }
+    });
+}
+</script>
+{% endblock %}

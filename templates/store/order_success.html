@@ -1,0 +1,71 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Trade Offer Qabul Qilindi — Skinly CS2{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
+
+    <!-- CS2 Success Badge -->
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/15">
+        <i data-lucide="check-check" class="w-8 h-8"></i>
+    </div>
+
+    <div class="space-y-2">
+        <span class="text-xs uppercase tracking-widest text-gold-400 font-extrabold">Trade Offer Navbatga Qo'yildi</span>
+        <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-white">Buyurtma muvaffaqiyatli qabul qilindi!</h1>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+            Skinly Steam Trade Boti 2-5 daqiqa ichida profilingizga Trade Offer yuboradi. Steam Guard orqali qabul qiling.
+        </p>
+    </div>
+
+    <!-- Receipt Card -->
+    <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/[0.06] text-left space-y-4">
+        <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+            <span class="text-xs text-slate-400">Buyurtma Trek-kodi:</span>
+            <span class="font-mono text-base font-bold text-gold-400 bg-gold-500/[0.08] px-3 py-1 rounded-lg border border-gold-500/20">
+                {{ order.tracking_code }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+                <span class="text-slate-500 block mb-0.5">Xaridor:</span>
+                <span class="font-semibold text-white">{{ order.full_name }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block mb-0.5">Telefon:</span>
+                <span class="font-semibold text-white font-mono">{{ order.phone }}</span>
+            </div>
+            <div class="col-span-2">
+                <span class="text-slate-500 block mb-0.5">Steam Trade URL:</span>
+                <span class="font-mono text-slate-300 break-all text-[11px]">{{ order.steam_trade_url }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block mb-0.5">Jami to'lov:</span>
+                <span class="font-extrabold text-gold-400 font-mono text-sm">${{ order.total_price }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block mb-0.5">Joriy status:</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    ● {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+        <a href="{% url 'store:track_order' %}?code={{ order.tracking_code }}"
+           class="btn-gold w-full sm:w-auto px-6 py-3 rounded-xl text-xs flex items-center justify-center space-x-1.5">
+            <i data-lucide="crosshair" class="w-4 h-4"></i>
+            <span>Trade holatini kuzatish</span>
+        </a>
+        <a href="{% url 'store:index' %}"
+           class="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-300 hover:text-white font-semibold text-xs transition-all">
+            Katalogga qaytish
+        </a>
+    </div>
+
+</div>
+{% endblock %}

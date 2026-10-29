@@ -1,0 +1,214 @@
+{% extends 'demo/base.html' %}
+{% load static %}
+{% load l10n %}
+{% block title %}{{ case.name }} — Skinly Demo Arena{% endblock %}
+{% block page_label %}Cases / {{ case.name }}{% endblock %}
+
+{% block content %}
+<div class="detail-back">
+  <a href="{% url 'store:demo_cases' %}" class="back-link">← Back to cases</a>
+  <div class="detail-back-chips">
+    <span class="demo-chip"><span class="pulse-dot"></span> VIRTUAL DEMO CREDITS ONLY · NO REAL MONEY VALUE</span>
+    <span class="stat-pill">{{ drops|length }} Showcase Skins</span>
+  </div>
+</div>
+
+<!-- Immersive Case Hero & Unboxing Stage -->
+<section class="case-detail-layout">
+  <div class="case-detail-art panel" data-case-card>
+    <div class="art-glow"></div>
+    <div class="case-card-stage">
+      <img src="{% static case.cover_image %}" alt="{{ case.name }}" class="case-hero-image" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      <div class="case-pedestal"></div>
+    </div>
+    <div class="case-art-badges">
+      <span class="case-category">{{ case.category }}</span>
+      <span class="case-theme-badge">{{ case.theme }} EDITION</span>
+    </div>
+  </div>
+
+  <div class="case-detail-info panel">
+    <div class="info-header">
+      <div class="case-title-row">
+        <span class="eyebrow">{{ case.theme }} COLLECTION</span>
+        {% if case.is_featured %}<span class="featured-badge">★ FEATURED CASE</span>{% endif %}
+      </div>
+      <h1>{{ case.name }}</h1>
+      <p class="case-desc">{{ case.description }}</p>
+    </div>
+
+    <div class="detail-specs">
+      <div class="spec-card">
+        <small>PRICE PER CASE</small>
+        <strong><span data-case-unit-price>{{ case.demo_price|floatformat:2 }}</span> credits</strong>
+      </div>
+      <div class="spec-card">
+        <small>POSSIBLE DROPS</small>
+        <strong>{{ drops|length }} exclusive skins</strong>
+      </div>
+      <div class="spec-card">
+        <small>YOUR DEMO BALANCE</small>
+        <strong>{% if user.is_authenticated and demo_wallet %}<span data-demo-balance>{{ demo_wallet.balance|floatformat:2 }}</span> credits{% else %}Sign in to play{% endif %}</strong>
+      </div>
+    </div>
+
+    <div class="detail-case-actions">
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'store:demo_action' %}" data-demo-form data-animation="case" data-duration="5800" data-case-price="{{ case.demo_price|unlocalize }}" data-case-balance="{{ demo_wallet.balance|unlocalize }}" data-case-has-drops="{{ items|yesno:'true,false' }}" id="open-case" onsubmit="event.preventDefault(); return false;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="case_open">
+        <input type="hidden" name="case_id" value="{{ case.pk }}">
+        <input type="hidden" name="request_id" value="{{ request_id }}">
+        <input type="hidden" name="quantity" value="1" data-case-quantity>
+
+        <fieldset class="case-quantity">
+          <div class="quantity-header">
+            <legend>CASES TO OPEN</legend>
+            <span class="quantity-hint">Select batch size</span>
+          </div>
+          <div class="quantity-options" role="group" aria-label="Cases per opening">
+            <button type="button" class="quantity-option is-selected" data-quantity-option="1" aria-pressed="true">1</button>
+            <button type="button" class="quantity-option" data-quantity-option="2" aria-pressed="false">2</button>
+            <button type="button" class="quantity-option" data-quantity-option="3" aria-pressed="false">3</button>
+            <button type="button" class="quantity-option" data-quantity-option="4" aria-pressed="false">4</button>
+            <button type="button" class="quantity-option" data-quantity-option="5" aria-pressed="false">5</button>
+            <button type="button" class="quantity-option" data-quantity-option="10" aria-pressed="false">10</button>
+          </div>
+        </fieldset>
+
+        <div class="opening-cost-strip" aria-live="polite">
+          <div class="cost-item">
+            <span>Price per case:</span>
+            <strong><span data-case-unit-price-display>{{ case.demo_price|floatformat:2 }}</span> credits</strong>
+          </div>
+          <div class="cost-divider">×</div>
+          <div class="cost-item">
+            <span>Quantity:</span>
+            <strong><span data-case-qty-display>1</span></strong>
+          </div>
+          <div class="cost-divider">=</div>
+          <div class="cost-item total-item">
+            <span>Total cost:</span>
+            <strong class="total-val"><span data-case-total>{{ case.demo_price|floatformat:2 }}</span> credits</strong>
+          </div>
+        </div>
+
+        <button class="button button-primary button-wide pulse-action case-open-btn" type="submit" data-case-submit {% if not items or demo_wallet.balance < case.demo_price %}disabled{% endif %}>
+          <span data-button-label>▶ &nbsp; Open 1 case · {{ case.demo_price|floatformat:2 }} credits</span>
+        </button>
+        <p class="case-balance-note" data-case-balance-note aria-live="polite"></p>
+      </form>
+
+      <div class="case-action-subrow">
+        <button type="button" class="button button-quiet button-small topup-quick-btn" data-topup-button title="Hisobingizni 5,000 demo credit bilan to'ldiring">+ 5,000 Credits (Top-up)</button>
+
+        <form method="post" action="{% url 'store:demo_action' %}" data-demo-form class="fav-form-inline" onsubmit="event.preventDefault(); return false;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="favorite_case">
+          <input type="hidden" name="target_id" value="{{ case.pk }}">
+          <button class="button button-quiet button-small favorite-button{% if is_favorite %} is-favorite{% endif %}" type="submit" data-favorite-button aria-pressed="{{ is_favorite|yesno:'true,false' }}">
+            {% if is_favorite %}♥ Saved to favorites{% else %}♡ Add to favorites{% endif %}
+          </button>
+        </form>
+      </div>
+      {% else %}
+      <div class="sign-in-prompt panel">
+        <p>Log in with your Skinly account to unlock cases using demo credits.</p>
+        <a class="button button-primary button-wide" id="open-case" href="{% url 'store:login' %}?next={{ request.path|urlencode }}">
+          Sign in to open with demo credits
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <p class="safe-note">
+      <span class="shield-icon">🛡</span> Opens use cosmetic demo credits only. Results are resolved securely by the server before animations run. Items are private to your demo gallery and cannot be exchanged for cash or Steam skins.
+    </p>
+  </div>
+</section>
+
+<!-- Central Roulette Wheel Stage (for single case opening) -->
+<div class="demo-carousel panel" data-carousel hidden>
+  <div class="carousel-hud">
+    <span class="carousel-badge"><span class="pulse-dot"></span> LIVE ROULETTE REEL</span>
+    <span class="carousel-target-name" data-carousel-caption>ROLLING FOR WINNER...</span>
+  </div>
+  <div class="carousel-viewport">
+    <div class="carousel-pointer top-pointer"></div>
+    <div class="carousel-pointer bottom-pointer"></div>
+    <div class="carousel-window">
+      <div class="carousel-track" data-carousel-track></div>
+    </div>
+  </div>
+  <p class="carousel-caption">DEMO REVEAL · SERVER OUTCOME RESOLVED</p>
+</div>
+
+<!-- Multi-Case Opening Reveal Stage (for 2, 3, 4, 5, 10 cases) -->
+<div class="multi-opening-stage panel" data-multi-stage hidden>
+  <div class="stage-hud">
+    <span class="stage-badge"><span class="pulse-dot"></span> <span data-multi-count-label>OPENING CASES...</span></span>
+    <span class="stage-subtext">SERVER OUTCOMES RESOLVED · UNBOXING IN PROGRESS</span>
+  </div>
+  <div class="multi-cards-container" data-multi-cards-container>
+    <!-- Dynamic unboxing slots injected here -->
+  </div>
+</div>
+
+<!-- Case Opening Results Modal -->
+<dialog class="case-results-modal" data-case-results-modal>
+  <div class="results-modal-wrapper">
+    <header class="results-modal-header">
+      <div class="results-badge-wrap">
+        <span class="results-emblem">✦</span>
+        <span class="results-badge" data-results-badge>UNBOXING SUCCESSFUL</span>
+      </div>
+      <h2 class="modal-title" data-results-title>Case Opening Results</h2>
+      <p class="results-summary" data-results-summary></p>
+      <button type="button" class="modal-close-icon" data-results-close aria-label="Close dialog">×</button>
+    </header>
+
+    <div class="modal-body" data-results-body>
+      <!-- Winning items rendered here -->
+    </div>
+
+    <footer class="modal-actions">
+      <button type="button" class="button button-primary" data-results-open-again>▶ Open Again</button>
+      <a href="{% url 'store:demo_inventory' %}" class="button button-quiet">🎒 View Inventory</a>
+      <button type="button" class="button button-secondary" data-results-close>Close</button>
+    </footer>
+  </div>
+</dialog>
+
+<!-- Drops Table -->
+<section class="content-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">DROP TABLE</span>
+      <h2>Possible showcase skins</h2>
+    </div>
+    <span class="stat-pill">{{ drops|length }} items available</span>
+  </div>
+
+  <div class="item-grid">
+    {% for drop in drops %}
+    <a class="item-card panel rarity-{{ drop.item.rarity }}" href="{% url 'store:demo_item_detail' slug=drop.item.slug %}">
+      <div class="card-art-wrap">
+        <img src="{% static drop.item.image %}" loading="lazy" alt="{{ drop.item.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      </div>
+      <div class="card-info">
+        <span class="rarity-label">{{ drop.item.get_rarity_display }}</span>
+        <strong>{{ drop.item.name }}</strong>
+        <div class="drop-meta">
+          <span class="drop-val">{{ drop.item.demo_value }} credits</span>
+          <span class="drop-chance">{{ drop.demo_chance }}% odds</span>
+        </div>
+      </div>
+    </a>
+    {% empty %}
+    <div class="empty-state panel">
+      <p>No showcase items assigned to this case yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

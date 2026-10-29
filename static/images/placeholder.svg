@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300" fill="none">
+  <rect width="300" height="300" rx="16" fill="#121318"/>
+  <circle cx="150" cy="150" r="70" fill="#1b1d24" stroke="#d4af37" stroke-width="2" stroke-opacity="0.25"/>
+  <path d="M120 150L180 150M150 120L150 180" stroke="#d4af37" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.6"/>
+  <text x="150" y="210" text-anchor="middle" fill="#8d94a5" font-family="sans-serif" font-size="12" font-weight="600" letter-spacing="1">SKINLY CS2</text>
+</svg>

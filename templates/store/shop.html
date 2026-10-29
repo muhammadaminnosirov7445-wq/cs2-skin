@@ -1,0 +1,194 @@
+{% extends 'store/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load skinly_tags %}
+
+{% block title %}{% trans "Skinly Shop" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>{% trans "Skinly Shop" %}</h1>
+        <p class="lead">{% trans "Discover and purchase a wide variety of CS2 skins." %}</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Filters Sidebar -->
+            <div class="shop-sidebar glass-panel rounded-2xl p-4 mb-4">
+                <h4 class="mb-3">{% trans "Filters" %}</h4>
+                <form method="GET" action="{% url 'store:shop' %}" id="shop-filter-form">
+                    <div class="mb-3">
+                        <label for="search-query" class="form-label">{% trans "Search" %}</label>
+                        <input type="text" name="q" id="search-query" class="form-control" placeholder="{% trans "Search skins..." %}" value="{{ search_query }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category-filter" class="form-label">{% trans "Category" %}</label>
+                        <select name="category" id="category-filter" class="form-select">
+                            <option value="">{% trans "All Categories" %}</option>
+                            {% for category in categories %}
+                                <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }} ({{ category.product_count }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="weapon-filter" class="form-label">{% trans "Weapon Type" %}</label>
+                        <select name="weapon" id="weapon-filter" class="form-select">
+                            <option value="">{% trans "All Weapons" %}</option>
+                            {% for weapon in available_weapons %}
+                                <option value="{{ weapon }}" {% if selected_weapon == weapon %}selected{% endif %}>{{ weapon }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="rarity-filter" class="form-label">{% trans "Rarity" %}</label>
+                        <select name="rarity" id="rarity-filter" class="form-select">
+                            <option value="">{% trans "All Rarities" %}</option>
+                            {% for rarity_code, rarity_name in rarity_choices %}
+                                <option value="{{ rarity_code }}" {% if selected_rarity == rarity_code %}selected{% endif %}>{{ rarity_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="min-price" class="form-label">{% trans "Min Price" %}</label>
+                        <input type="number" name="min_price" id="min-price" class="form-control" value="{{ min_price }}" min="0" step="0.01">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="max-price" class="form-label">{% trans "Max Price" %}</label>
+                        <input type="number" name="max_price" id="max-price" class="form-control" value="{{ max_price }}" min="0" step="0.01">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sort-by" class="form-label">{% trans "Sort By" %}</label>
+                        <select name="sort" id="sort-by" class="form-select">
+                            <option value="-created_at" {% if sort_by == "-created_at" %}selected{% endif %}>{% trans "Newest" %}</option>
+                            <option value="retail_price" {% if sort_by == "retail_price" %}selected{% endif %}>{% trans "Price: Low to High" %}</option>
+                            <option value="-retail_price" {% if sort_by == "-retail_price" %}selected{% endif %}>{% trans "Price: High to Low" %}</option>
+                            <option value="title" {% if sort_by == "title" %}selected{% endif %}>{% trans "Name: A-Z" %}</option>
+                            <option value="-title" {% if sort_by == "-title" %}selected{% endif %}>{% trans "Name: Z-A" %}</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="button button-primary w-100">{% trans "Apply Filters" %}</button>
+                    <a href="{% url 'store:shop' %}" class="button button-quiet w-100 mt-2">{% trans "Clear Filters" %}</a>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- Product Grid -->
+            <div class="shop-grid">
+                {% for product in products %}
+                    <div class="product-card rarity-{{ product.rarity }} glass-panel rounded-2xl">
+                        <a href="{% url 'store:demo_item_detail' slug=product.slug %}" class="product-card-link">
+                            <div class="product-image-wrap">
+                                <img src="{{ product.display_image }}" alt="{{ product.title }}" class="product-image">
+                                {% if product.stattrak %}
+                                    <span class="stattrak-badge">StatTrak™</span>
+                                {% endif %}
+                            </div>
+                            <div class="product-info p-3">
+                                <h5 class="product-title">{{ product.title }}</h5>
+                                <p class="product-price">{{ product.retail_price|localize_credits }}</p>
+                                <div class="product-stock">
+                                    {% if product.stock > 0 %}
+                                        <span class="text-success">{% trans "In Stock" %}: {{ product.stock }}</span>
+                                    {% else %}
+                                        <span class="text-danger">{% trans "Out of Stock" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        <div class="product-actions p-3">
+                            <button class="button button-primary button-sm w-100" {% if product.stock == 0 %}disabled{% endif %}>{% trans "Buy Now" %}</button>
+                            <button class="button button-secondary button-sm w-100 mt-2 {% if product.id in favorite_ids %}is-favorite{% endif %}" data-product-id="{{ product.id }}" data-action="toggle-favorite">
+                                {% if product.id in favorite_ids %}
+                                    <i class="fas fa-heart"></i> {% trans "Remove Favorite" %}
+                                {% else %}
+                                    <i class="far fa-heart"></i> {% trans "Add to Favorite" %}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <p class="text-center">{% trans "No skins found matching your criteria." %}</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Previous" %}</a></li>
+                        {% endif %}
+
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Next" %}</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-action="toggle-favorite"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const isFavorite = this.classList.contains('is-favorite');
+            const url = "{% url 'store:api_favorite_toggle' %}";
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `product_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.is_favorite) {
+                        this.classList.add('is-favorite');
+                        this.innerHTML = '<i class="fas fa-heart"></i> {% trans "Remove Favorite" %}';
+                    } else {
+                        this.classList.remove('is-favorite');
+                        this.innerHTML = '<i class="far fa-heart"></i> {% trans "Add to Favorite" %}';
+                    }
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while toggling favorite status.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

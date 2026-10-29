@@ -1,0 +1,139 @@
+{% load static %}
+<!doctype html>
+<html lang="uz"{% if settings_obj and not settings_obj.dark_theme_enabled %} class="theme-light"{% endif %} data-demo-action-url="{% url 'store:demo_action' %}" data-theme-preference="{% if settings_obj %}{% if settings_obj.dark_theme_enabled %}dark{% else %}light{% endif %}{% endif %}" data-sound-enabled="{% if settings_obj and settings_obj.sound_enabled %}true{% else %}false{% endif %}" data-animations-enabled="{% if settings_obj and settings_obj.animations_enabled %}true{% else %}false{% endif %}" data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}Skinly — Premium CS2 Gaming Platform{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/demo.css' %}">
+  <link rel="stylesheet" href="{% static 'css/skinly-immersive.css' %}">
+  <link rel="stylesheet" href="{% static 'css/demo-theme.css' %}">
+</head>
+<body>
+  <div class="demo-shell">
+    <aside class="demo-sidebar" id="demo-sidebar" aria-label="Asosiy navigatsiya">
+      <a class="demo-brand" href="{% url 'store:demo_home' %}">
+        <span class="brand-mark">S</span>
+        <span class="brand-text">SKINLY<small>CS2 ARENA</small></span>
+      </a>
+
+      <div class="sidebar-caption">MAIN MENU</div>
+      <nav class="demo-nav">
+        {% for key, label, route_name in navigation %}
+        <a href="{% url 'store:'|add:route_name %}" class="nav-link{% if active_section == key %} active{% endif %}"{% if active_section == key %} aria-current="page"{% endif %}>
+          <span class="nav-icon" aria-hidden="true">
+            {% if key == 'home' %}⌂{% elif key == 'cases' %}▣{% elif key == 'battles' %}⚔{% elif key == 'upgrade' %}⚡{% elif key == 'contracts' %}◈{% elif key == 'inventory' %}🎒{% elif key == 'profile' %}👤{% elif key == 'favorites' %}★{% elif key == 'history' %}◷{% elif key == 'daily-rewards' %}✦{% elif key == 'missions' %}🎯{% elif key == 'leaderboard' %}🏆{% elif key == 'collections' %}▦{% elif key == 'settings' %}⚙{% elif key == 'notifications' %}🔔{% else %}💎{% endif %}
+          </span>
+          <span class="nav-label">{{ label }}</span>
+          {% if key == 'upgrade' %}<span class="nav-badge hot">HOT</span>{% elif key == 'battles' %}<span class="nav-badge live">PVP</span>{% endif %}
+        </a>
+        {% endfor %}
+      </nav>
+
+      <div class="sidebar-bottom">
+        <span class="demo-chip"><span class="pulse-dot"></span> DEMO ONLY · NO CASH VALUE</span>
+        <a class="nav-link market-link" href="{% url 'store:index' %}">
+          <span class="nav-icon">💎</span>
+          <span class="nav-label">Marketplace Demo</span>
+        </a>
+        {% if user.is_authenticated %}
+        <a class="user-chip" href="{% url 'store:demo_profile' %}">
+          <span class="avatar">{{ user.username|slice:":1"|upper }}</span>
+          <span class="user-meta">{{ user.username }}<small>Level {{ profile.level|default:1 }} Player</small></span>
+        </a>
+        {% else %}
+        <a class="user-chip" href="{% url 'store:login' %}?next={{ request.path|urlencode }}">
+          <span class="avatar">?</span>
+          <span class="user-meta">Sign in<small>Save your demo progress</small></span>
+        </a>
+        {% endif %}
+      </div>
+    </aside>
+
+    <div class="demo-main">
+      <header class="demo-topbar">
+        <button class="mobile-menu" type="button" aria-label="Menyuni ochish" aria-expanded="false" data-menu-toggle>☰</button>
+        <div class="topbar-breadcrumb">
+          <span>Skinly</span>
+          <span class="crumb-dot">/</span>
+          <strong>{% block page_label %}Demo arena{% endblock %}</strong>
+        </div>
+
+        <div class="topbar-actions">
+          <span class="online-pill"><span class="pulse-dot"></span> Demo server active</span>
+
+          {% if user.is_authenticated and demo_wallet %}
+          <div class="demo-balance-group">
+            <span class="demo-balance" title="Demo balans — haqiqiy pul emas">
+              <small>DEMO BALANCE</small>
+              <strong><span data-demo-balance>{{ demo_wallet.balance|floatformat:2 }}</span></strong>
+            </span>
+            <button type="button" class="topup-btn" data-topup-button title="Balansni to'ldirish (+5,000)">+ Top-up</button>
+          </div>
+          {% endif %}
+
+          <button type="button" class="icon-button" data-sound-toggle aria-pressed="false" title="Demo tovushini yoqish yoki o‘chirish">♫</button>
+          <button type="button" class="icon-button" data-theme-toggle aria-label="Ko‘rinishni almashtirish">◐</button>
+
+          {% if user.is_authenticated %}
+          <a class="icon-button notification-btn" href="{% url 'store:demo_notifications' %}" title="Bildirishnomalar" aria-label="Notifications">
+            <span>🔔</span>
+          </a>
+          <a class="topbar-avatar" href="{% url 'store:demo_profile' %}" aria-label="Profile">{{ user.username|slice:":1"|upper }}</a>
+          <form method="post" action="{% url 'store:logout' %}">
+            {% csrf_token %}
+            <button class="icon-button" type="submit" title="Log out" aria-label="Log out">↪</button>
+          </form>
+          {% else %}
+          <a class="sign-in-link" href="{% url 'store:login' %}?next={{ request.path|urlencode }}">Sign in</a>
+          <a class="sign-in-link register-highlight" href="{% url 'store:register' %}">Register</a>
+          {% endif %}
+        </div>
+      </header>
+
+      <main class="demo-content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="demo-footer">
+        <span>SKINLY · High-performance CS2 Gaming Platform & Simulation Arena.</span>
+        <span>Cosmetic Demo Credits · No real money deposit · No cash-out</span>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast-stack" aria-live="polite" aria-atomic="true" data-toast-stack></div>
+
+  <!-- Result Modal Dialog -->
+  <div class="modal-backdrop" data-result-backdrop hidden>
+    <section class="result-modal panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <button type="button" class="modal-close" data-modal-close aria-label="Yopish">×</button>
+      <div class="result-emblem">✦</div>
+      <p class="eyebrow">SIMULATION COMPLETE</p>
+      <h2 id="result-title">Demo natija</h2>
+      <div data-result-content></div>
+      <button class="button button-primary" type="button" data-modal-close>Davom etish</button>
+    </section>
+  </div>
+
+  <!-- Steam Demo Notice Dialog -->
+  <dialog class="picker-dialog panel" id="steam-notice-dialog">
+    <div class="picker-header">
+      <div>
+        <span class="eyebrow">STEAM BOT SIMULATOR</span>
+        <h2>Steam integratsiyasi</h2>
+      </div>
+      <button class="icon-button" type="button" onclick="document.getElementById('steam-notice-dialog').close()" aria-label="Close">×</button>
+    </div>
+    <div style="padding: 1.5rem; text-align: center; color: var(--color-muted);">
+      <p style="font-size: 1.1rem; color: #fff; margin-bottom: 0.75rem;">🛡️ Skinly xavfsiz demo platformadir</p>
+      <p>Haqiqiy Steam hisobi yoki Steam Trade takliflari ulanmagan. Barcha itemlar platforma doirasidagi virtual kolleksiya hisoblanadi.</p>
+      <button class="button button-primary" type="button" onclick="document.getElementById('steam-notice-dialog').close()" style="margin-top: 1.25rem;">Tushundim</button>
+    </div>
+  </dialog>
+
+  <script src="{% static 'js/demo.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

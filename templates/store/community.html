@@ -1,0 +1,139 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Community & Skin Battle — Skinly{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <header class="rounded-3xl glass-panel border border-indigo-500/30 p-6 sm:p-9">
+        <p class="text-xs uppercase tracking-[0.2em] text-cyan-300 font-bold">Skinly community</p>
+        <h1 class="mt-2 text-3xl sm:text-4xl font-extrabold text-white">Play, collect, share.</h1>
+        <p class="mt-3 max-w-2xl text-sm text-slate-400">Compare real marketplace skins, build collections, vote in community polls, and earn XP for exploring. No paid rewards or random prizes.</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+            <a href="#battle" class="btn-gold px-4 py-2.5 rounded-xl text-xs font-bold">Enter Skin Battle</a>
+            <a href="#collections" class="px-4 py-2.5 rounded-xl border border-cyan-400/30 text-cyan-300 text-xs font-bold hover:bg-cyan-400/10">Browse collections</a>
+        </div>
+    </header>
+
+    <section id="battle" class="glass-panel rounded-2xl border border-indigo-500/25 p-5 sm:p-7">
+        <div class="flex flex-wrap justify-between items-end gap-3 mb-5">
+            <div><p class="text-xs uppercase tracking-widest text-purple-300">Daily comparison</p><h2 class="text-2xl font-bold text-white mt-1">Skin Battle</h2></div>
+            {% if battle %}<p class="text-xs text-slate-400">Today’s votes: <strong class="text-cyan-300">{{ battle.votes.count }}</strong></p>{% endif %}
+        </div>
+        {% if battle %}
+        <div class="grid md:grid-cols-[1fr_auto_1fr] items-stretch gap-4">
+            <article class="rounded-2xl bg-[#090c19] border border-indigo-500/20 p-4 text-center">
+                <a href="{% url 'store:product_detail' slug=battle.product_a.slug %}">
+                    <img src="{{ battle.product_a.display_image }}" alt="{{ battle.product_a.title }}" class="w-full h-40 sm:h-52 object-contain">
+                    <h3 class="text-sm font-bold text-white mt-3">{{ battle.product_a.title }}</h3>
+                    <p class="text-xs text-cyan-300 mt-1">${{ battle.product_a.retail_price }} · {{ battle.product_a.wear_condition }}</p>
+                </a>
+                <p class="text-xs text-slate-500 mt-3">{{ battle_votes_a }} vote{{ battle_votes_a|pluralize }}</p>
+                {% if user.is_authenticated and not battle_vote %}
+                <form method="post" action="{% url 'store:community' %}" class="mt-3">{% csrf_token %}<input type="hidden" name="action" value="vote_battle"><input type="hidden" name="battle_id" value="{{ battle.id }}"><input type="hidden" name="choice" value="{{ battle.product_a.id }}"><button class="btn-gold w-full rounded-xl py-2.5 text-xs font-bold">Vote for this skin</button></form>
+                {% elif battle_vote and battle_vote.choice_id == battle.product_a_id %}<span class="inline-block mt-3 text-xs text-emerald-300">Your choice</span>{% endif %}
+            </article>
+            <div class="self-center text-center text-2xl font-black text-purple-300">VS</div>
+            <article class="rounded-2xl bg-[#090c19] border border-indigo-500/20 p-4 text-center">
+                <a href="{% url 'store:product_detail' slug=battle.product_b.slug %}">
+                    <img src="{{ battle.product_b.display_image }}" alt="{{ battle.product_b.title }}" class="w-full h-40 sm:h-52 object-contain">
+                    <h3 class="text-sm font-bold text-white mt-3">{{ battle.product_b.title }}</h3>
+                    <p class="text-xs text-cyan-300 mt-1">${{ battle.product_b.retail_price }} · {{ battle.product_b.wear_condition }}</p>
+                </a>
+                <p class="text-xs text-slate-500 mt-3">{{ battle_votes_b }} vote{{ battle_votes_b|pluralize }}</p>
+                {% if user.is_authenticated and not battle_vote %}
+                <form method="post" action="{% url 'store:community' %}" class="mt-3">{% csrf_token %}<input type="hidden" name="action" value="vote_battle"><input type="hidden" name="battle_id" value="{{ battle.id }}"><input type="hidden" name="choice" value="{{ battle.product_b.id }}"><button class="btn-gold w-full rounded-xl py-2.5 text-xs font-bold">Vote for this skin</button></form>
+                {% elif battle_vote and battle_vote.choice_id == battle.product_b_id %}<span class="inline-block mt-3 text-xs text-emerald-300">Your choice</span>{% endif %}
+            </article>
+        </div>
+        {% if not user.is_authenticated %}<p class="mt-4 text-center text-xs text-slate-400"><a class="text-cyan-300" href="{% url 'store:login' %}">Sign in</a> to vote once per daily battle.</p>{% elif battle_vote %}<p class="mt-4 text-center text-xs text-slate-400">Your vote is recorded. A new matchup arrives tomorrow.</p>{% endif %}
+        {% else %}<p class="text-sm text-slate-400">Battle starts when at least two skins are available.</p>{% endif %}
+        <div class="grid sm:grid-cols-2 gap-5 mt-7 border-t border-white/5 pt-5">
+            <div><h3 class="text-sm font-bold text-white mb-2">Weekly winners</h3>{% for skin in weekly_winners %}<p class="text-xs text-slate-400 py-1">{{ forloop.counter }}. {{ skin.title }} <span class="text-cyan-300">· {{ skin.vote_count }} votes</span></p>{% empty %}<p class="text-xs text-slate-500">Votes will shape the weekly leaderboard.</p>{% endfor %}</div>
+            <div><h3 class="text-sm font-bold text-white mb-2">Community favorites</h3>{% for skin in popular_skins %}<p class="text-xs text-slate-400 py-1">{{ skin.title }} <span class="text-rose-300">· {{ skin.favorite_count }} favorites</span></p>{% empty %}<p class="text-xs text-slate-500">Favorite a skin to help shape this list.</p>{% endfor %}</div>
+        </div>
+    </section>
+
+    <section id="missions" class="glass-panel rounded-2xl border border-cyan-400/20 p-5 sm:p-7">
+        <div class="flex flex-wrap justify-between gap-2 items-end"><div><p class="text-xs uppercase tracking-widest text-cyan-300">Progress, not pay-to-win</p><h2 class="text-xl font-bold text-white mt-1">Missions & achievements</h2></div>
+            {% if user.is_authenticated %}<p class="text-sm text-purple-300 font-bold">Level {{ profile.level }} · {{ profile.experience_points }} XP</p>{% else %}<a class="text-xs text-cyan-300" href="{% url 'store:login' %}">Sign in to save XP</a>{% endif %}
+        </div>
+        {% if user.is_authenticated %}
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+            {% for mission in missions %}
+            <article class="rounded-xl bg-[#090c19] border border-white/5 p-4">
+                <h3 class="text-sm font-bold text-white">{{ mission.title }}</h3><p class="text-xs text-slate-500 mt-1">{{ mission.description }}</p>
+                <p class="text-xs text-cyan-300 mt-3">{{ mission.progress }}/{{ mission.target }} · {{ mission.xp }} XP</p>
+                <div class="h-1.5 bg-white/5 rounded-full mt-2"><div class="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style="width:{% widthratio mission.progress mission.target 100 %}%"></div></div>
+                {% if mission.claimed %}<p class="text-xs text-emerald-300 mt-3">Reward claimed</p>{% elif mission.progress >= mission.target %}<form method="post" class="mt-3">{% csrf_token %}<input type="hidden" name="action" value="claim_mission"><input type="hidden" name="mission_code" value="{{ mission.code }}"><button class="text-xs text-cyan-300 font-bold">Claim XP</button></form>{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}<p class="mt-4 text-sm text-slate-400">Sign in to save mission progress and earn non-monetary XP.</p>{% endif %}
+        {% if user.is_authenticated and quiz_products|length == 2 %}
+        <div class="mt-5 rounded-xl bg-[#090c19] border border-indigo-500/15 p-4">
+            <h3 class="text-sm font-bold text-white">Quick quiz: Which listing costs less?</h3>
+            <form method="post" class="flex flex-wrap gap-2 mt-3">{% csrf_token %}<input type="hidden" name="action" value="answer_quiz">{% for skin in quiz_products %}<button name="answer" value="{{ skin.id }}" class="px-3 py-2 rounded-lg border border-indigo-500/25 text-xs text-slate-200 hover:border-cyan-400">{{ skin.title }} — ${{ skin.retail_price }}</button>{% endfor %}</form>
+        </div>{% endif %}
+    </section>
+
+    <section id="collections" class="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] gap-5">
+        <div class="glass-panel rounded-2xl border border-indigo-500/20 p-5 sm:p-7">
+            <div class="flex justify-between items-end gap-3"><div><p class="text-xs uppercase tracking-widest text-purple-300">Made by players</p><h2 class="text-xl font-bold text-white mt-1">Community collections</h2></div></div>
+            <div class="grid sm:grid-cols-2 gap-3 mt-5">
+                {% for collection in public_collections %}
+                <a href="{% url 'store:collection_detail' share_id=collection.share_id %}" class="rounded-xl bg-[#090c19] border border-white/5 p-4 hover:border-cyan-400/30">
+                    <h3 class="text-sm font-bold text-white">{{ collection.title }}</h3><p class="text-xs text-slate-500 mt-1">by {{ collection.owner.username }} · {{ collection.item_count }} skins · {{ collection.comment_count }} comments</p>
+                    <p class="text-xs text-slate-400 mt-2">{{ collection.description|truncatechars:120 }}</p>
+                </a>
+                {% empty %}<p class="text-sm text-slate-500">No public collections yet. Build the first one.</p>{% endfor %}
+            </div>
+            {% if user.is_authenticated %}
+            <form method="post" class="mt-5 border-t border-white/5 pt-5 space-y-3">{% csrf_token %}<input type="hidden" name="action" value="create_collection">
+                <h3 class="text-sm font-bold text-white">Create a collection</h3>
+                <input name="title" required maxlength="100" placeholder="Collection title" class="w-full rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2.5 text-sm text-white">
+                <textarea name="description" maxlength="1000" rows="2" placeholder="Description (optional)" class="w-full rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2.5 text-sm text-white"></textarea>
+                <label class="flex items-center gap-2 text-xs text-slate-400"><input type="checkbox" name="is_public" checked> Public collection (uncheck for private)</label>
+                <button class="btn-gold px-4 py-2.5 rounded-xl text-xs font-bold">Create collection</button>
+            </form>
+            {% else %}<p class="mt-5 text-xs text-slate-400"><a class="text-cyan-300" href="{% url 'store:login' %}">Sign in</a> to create and share your own collection.</p>{% endif %}
+        </div>
+        <aside class="glass-panel rounded-2xl border border-cyan-400/20 p-5">
+            <h2 class="text-lg font-bold text-white">My collections</h2>
+            {% if user.is_authenticated %}{% for collection in my_collections %}<a class="block py-3 border-b border-white/5 text-xs text-cyan-300" href="{% url 'store:collection_detail' share_id=collection.share_id %}">{{ collection.title }} <span class="text-slate-500">· {% if collection.is_public %}Public{% else %}Private{% endif %}</span></a>{% empty %}<p class="text-xs text-slate-500 mt-3">Your collections will appear here.</p>{% endfor %}
+            {% else %}<p class="text-xs text-slate-500 mt-3">Sign in to manage your collections.</p>{% endif %}
+        </aside>
+    </section>
+
+    <section class="grid lg:grid-cols-2 gap-5">
+        <div class="glass-panel rounded-2xl border border-indigo-500/20 p-5 sm:p-7">
+            <p class="text-xs uppercase tracking-widest text-cyan-300">Community vote</p><h2 class="text-xl font-bold text-white mt-1">Weekly skin polls</h2>
+            {% for poll in polls %}
+            <div class="mt-4 p-4 rounded-xl bg-[#090c19] border border-white/5"><h3 class="text-sm font-bold text-white">{{ poll.title }}</h3>{% if poll.description %}<p class="text-xs text-slate-500 mt-1">{{ poll.description }}</p>{% endif %}
+                {% if user.is_authenticated and poll.is_open and not poll.user_has_voted %}
+                <form method="post" class="mt-3 space-y-2">{% csrf_token %}<input type="hidden" name="action" value="poll_vote"><input type="hidden" name="poll_id" value="{{ poll.id }}">{% for choice in poll.choices.all %}<label class="flex items-center gap-2 text-xs text-slate-300"><input type="radio" name="choice_id" value="{{ choice.id }}" required> {{ choice.product.title }} — ${{ choice.product.retail_price }}</label>{% endfor %}<button class="mt-2 text-xs text-cyan-300 font-bold">Submit vote</button></form>
+                {% else %}<div class="mt-3 space-y-2">{% for choice in poll.choices.all %}<p class="text-xs text-slate-400">{{ choice.product.title }} · {{ choice.votes.count }} vote{{ choice.votes.count|pluralize }}</p>{% endfor %}<p class="text-[10px] text-slate-600">{% if poll.is_open %}Poll ends {{ poll.ends_at|date:"M j, H:i" }}{% elif poll.starts_at > now %}Voting opens {{ poll.starts_at|date:"M j, H:i" }}{% else %}Poll closed {{ poll.ends_at|date:"M j, H:i" }}{% endif %}</p></div>{% endif %}
+            </div>{% empty %}<p class="text-sm text-slate-500 mt-4">No active polls. Community polls will appear here.</p>{% endfor %}
+        </div>
+        <div class="glass-panel rounded-2xl border border-purple-500/20 p-5 sm:p-7">
+            <p class="text-xs uppercase tracking-widest text-purple-300">Personalized for you</p><h2 class="text-xl font-bold text-white mt-1">Tune your recommendations</h2>
+            {% if user.is_authenticated %}
+            <form method="post" class="mt-4 space-y-4">{% csrf_token %}<input type="hidden" name="action" value="save_preferences">
+                <div><p class="text-xs text-slate-400 mb-2">Weapon types</p><div class="flex flex-wrap gap-2">{% for weapon in weapon_types %}<label class="px-2.5 py-1.5 rounded-lg bg-[#090c19] border border-white/5 text-xs text-slate-300"><input type="checkbox" name="weapon_preferences" value="{{ weapon }}" {% if weapon in profile.weapon_preferences %}checked{% endif %}> {{ weapon }}</label>{% endfor %}</div></div>
+                <div class="grid grid-cols-2 gap-3"><label class="text-xs text-slate-400">Minimum price<input type="number" min="0" step="0.01" name="preferred_min_price" value="{{ profile.preferred_min_price|default:'' }}" class="mt-1 w-full rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2 text-white"></label><label class="text-xs text-slate-400">Maximum price<input type="number" min="0" step="0.01" name="preferred_max_price" value="{{ profile.preferred_max_price|default:'' }}" class="mt-1 w-full rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2 text-white"></label></div>
+                <button class="btn-gold px-4 py-2 rounded-lg text-xs font-bold">Save preferences</button>
+            </form>
+            <form method="post" class="mt-3" onsubmit="localStorage.removeItem('skinly_recent_views')">{% csrf_token %}<input type="hidden" name="action" value="clear_history"><button class="text-xs text-slate-400 underline hover:text-white">Clear my browsing history</button></form>
+            {% else %}<p class="text-xs text-slate-400 mt-3">Recommendations use your saved favorite skins, recent views, chosen weapon types, and price range. <a class="text-cyan-300" href="{% url 'store:login' %}">Sign in</a> to personalize them.</p>{% endif %}
+        </div>
+    </section>
+
+    <section class="glass-panel rounded-2xl border border-cyan-400/20 p-5 sm:p-7">
+        <p class="text-xs uppercase tracking-widest text-cyan-300">Price alerts</p><h2 class="text-xl font-bold text-white mt-1">Watchlist</h2>
+        <p class="text-xs text-slate-500 mt-2">Alerts use the current stored marketplace listing price and available stock. We don’t estimate or fabricate price changes.</p>
+        {% if user.is_authenticated %}
+        <form method="post" class="grid sm:grid-cols-[1fr_180px_auto] gap-2 mt-4">{% csrf_token %}<input type="hidden" name="action" value="add_watch"><select name="product_id" required class="rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2 text-xs text-white">{% for product in product_options %}<option value="{{ product.id }}">{{ product.title }} · ${{ product.retail_price }}</option>{% endfor %}</select><input type="number" name="target_price" min="0.01" step="0.01" required placeholder="Target price ($)" class="rounded-lg bg-[#090c19] border border-indigo-500/20 px-3 py-2 text-xs text-white"><button class="btn-gold rounded-lg px-4 py-2 text-xs font-bold">Add watch</button></form>
+        <div class="mt-4 divide-y divide-white/5">{% for watch in watches %}<div class="py-3 flex flex-wrap items-center justify-between gap-2"><p class="text-xs text-slate-300">{{ watch.product.title }} · target ${{ watch.target_price }} · listing ${{ watch.product.retail_price }}{% if watch.notified_at %}<span class="text-emerald-300"> · notified {{ watch.notified_at|date:"M j" }}</span>{% endif %}</p><form method="post">{% csrf_token %}<input type="hidden" name="action" value="remove_watch"><input type="hidden" name="watch_id" value="{{ watch.id }}"><button class="text-xs text-rose-300">Remove</button></form></div>{% empty %}<p class="text-xs text-slate-500 mt-4">No price watches yet.</p>{% endfor %}</div>
+        {% else %}<p class="text-xs text-slate-400 mt-4"><a class="text-cyan-300" href="{% url 'store:login' %}">Sign in</a> to create a price watch.</p>{% endif %}
+    </section>
+</div>
+{% endblock %}

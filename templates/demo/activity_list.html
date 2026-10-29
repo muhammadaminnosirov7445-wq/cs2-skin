@@ -1,0 +1,39 @@
+<div class="activity-list">
+  {% for activity in activities %}
+  <article class="activity-row">
+    <span class="activity-mark" aria-hidden="true">{% if activity.activity_type == 'case_open' %}▣{% elif activity.activity_type == 'battle' %}⚔{% elif activity.activity_type == 'upgrade' %}↗{% elif activity.activity_type == 'contract' %}◇{% else %}✦{% endif %}</span>
+    <div>
+      <strong>{{ activity.get_activity_type_display }}</strong>
+      <p>
+        {% if activity.details.case_name %}
+          {{ activity.details.case_name }} · {{ activity.details.quantity|default:1 }} opened ·
+          spent {{ activity.details.total_cost|default:activity.details.price }} demo credits ·
+          {% if activity.details.response.results %}
+            {% for item in activity.details.response.results %}{{ item.name }} ({{ item.demo_value }} credits){% if not forloop.last %}, {% endif %}{% endfor %}
+          {% else %}
+            {{ activity.details.item_name }}
+          {% endif %}
+        {% elif activity.details.source_name %}
+          {{ activity.details.source_name }} → {{ activity.details.target_name }}
+        {% elif activity.details.result_name %}
+          {{ activity.details.input_count }} items combined · {{ activity.details.result_name }}
+        {% elif activity.details.winner %}
+          {{ activity.details.winner }} won the fixed demo battle
+        {% elif activity.details.xp %}
+          +{{ activity.details.xp }} non-monetary demo XP
+        {% else %}
+          A demo simulation was recorded.
+        {% endif %}
+      </p>
+      <small>{{ activity.created_at|date:"M j, Y · H:i" }}</small>
+    </div>
+    <span class="demo-chip">DEMO</span>
+  </article>
+  {% empty %}
+  <div class="empty-state">
+    <span>◷</span>
+    <h2>No demo activity yet</h2>
+    <p>Explore a case or simulation to start your private activity history.</p>
+  </div>
+  {% endfor %}
+</div>

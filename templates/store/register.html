@@ -1,0 +1,228 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Ro'yxatdan o'tish — Skinly CS2 Cyber Luxury{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12 sm:py-16">
+    <div class="relative glass-panel rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-2xl space-y-6 animate-fade-in overflow-hidden">
+        
+        <!-- Cyber Ambient Glow Orbs -->
+        <div class="glow-orb glow-orb-violet w-56 h-56 -top-16 -right-16 opacity-30"></div>
+        <div class="glow-orb glow-orb-cyan w-48 h-48 -bottom-12 -left-12 opacity-25"></div>
+
+        <!-- Header -->
+        <div class="relative z-10 text-center space-y-2">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/10 border border-indigo-500/40 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i data-lucide="shield-check" class="w-7 h-7 text-cyan-400"></i>
+            </div>
+            <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-wide" data-i18n="reg_title">
+                Ro'yxatdan o'tish
+            </h1>
+            <p class="text-xs text-slate-300 max-w-xs mx-auto" data-i18n="reg_subtitle">
+                Skinly hisobini yarating va +$100.00 xarid bonusiga ega bo'ling!
+            </p>
+        </div>
+
+        <!-- Inline Message Alerts -->
+        {% if messages %}
+            <div class="relative z-10 space-y-2">
+                {% for message in messages %}
+                <div class="p-3.5 rounded-xl text-xs flex items-center space-x-2.5 border animate-fade-in
+                    {% if message.tags == 'error' %} bg-rose-500/15 border-rose-500/40 text-rose-200
+                    {% elif message.tags == 'success' %} bg-emerald-500/15 border-emerald-500/40 text-emerald-200
+                    {% else %} bg-indigo-500/15 border-indigo-500/40 text-indigo-200 {% endif %}">
+                    {% if message.tags == 'error' %}
+                        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+                    {% else %}
+                        <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+                    {% endif %}
+                    <span class="leading-tight font-medium">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Quick 1-Click Demo Registration Button -->
+        <div class="relative z-10">
+            <form method="POST" action="{% url 'store:register' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="demo_register">
+                <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500/20 via-indigo-500/25 to-purple-500/20 hover:from-cyan-500/30 hover:to-purple-500/30 border border-cyan-400/40 text-cyan-300 font-bold text-xs transition-all flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/10 active:scale-[0.98]">
+                    <i data-lucide="zap" class="w-4 h-4 text-cyan-400 fill-cyan-400"></i>
+                    <span data-i18n="reg_btn_demo">1-bosishda Demo hisob ochish (+$150 Bonus)</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Social Registration Buttons -->
+        <div class="relative z-10 space-y-2.5">
+            <a href="{% url 'store:oauth_google' %}"
+               class="w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-cyan-400/40 text-white font-medium text-xs transition-all flex items-center justify-center space-x-2.5 group active:scale-[0.98]">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span data-i18n="reg_google">Google orqali ro'yxatdan o'tish</span>
+            </a>
+
+            <a href="{% url 'store:oauth_github' %}"
+               class="w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-cyan-400/40 text-white font-medium text-xs transition-all flex items-center justify-center space-x-2.5 group active:scale-[0.98]">
+                <svg class="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+                <span data-i18n="reg_github">GitHub orqali ro'yxatdan o'tish</span>
+            </a>
+        </div>
+
+        <div class="relative flex items-center justify-center my-2">
+            <div class="border-t border-indigo-500/20 w-full"></div>
+            <span class="bg-[#0b0e1d] px-3 text-[10px] uppercase tracking-wider text-slate-400 font-semibold absolute rounded-full border border-indigo-500/30" data-i18n="reg_or_form">
+                Yoki to'g'ridan-to'g'ri forma
+            </span>
+        </div>
+
+        <!-- Registration Form (100% Reliable & Foolproof) -->
+        <form method="POST" action="{% url 'store:register' %}" class="relative z-10 space-y-4" id="reg-form">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-200 mb-1.5 flex items-center">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-400 mr-1.5"></i>
+                    <span data-i18n="reg_username_label">Login (Foydalanuvchi nomi)</span> <span class="text-rose-400 ml-0.5">*</span>
+                </label>
+                <input type="text" name="username" value="{{ username|default:'' }}" required autofocus
+                       class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500 transition-all font-medium"
+                       placeholder="Masalan: Sardor99" data-i18n-placeholder="reg_username_placeholder">
+            </div>
+
+            <!-- Password with Show/Hide Eye Toggle -->
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-200 mb-1.5 flex items-center">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 text-cyan-400 mr-1.5"></i>
+                    <span data-i18n="reg_pwd_label">Parol</span> <span class="text-rose-400 ml-0.5">*</span>
+                </label>
+                <div class="relative">
+                    <input type="password" id="reg-pwd" name="password" required
+                           class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500 transition-all"
+                           placeholder="Istalgan parolingizni kiriting" data-i18n-placeholder="reg_pwd_placeholder">
+                    <button type="button" onclick="togglePassVisibility('reg-pwd', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors" title="Parolni ko'rsatish">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Optional Confirm Password -->
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                    <span class="flex items-center">
+                        <i data-lucide="check-check" class="w-3.5 h-3.5 text-indigo-400 mr-1.5"></i>
+                        <span data-i18n="reg_pwd_confirm_label">Parolni tasdiqlang (Ixtiyoriy)</span>
+                    </span>
+                    <span id="pwd-match-hint" class="text-[10px] text-emerald-400 font-semibold hidden">Mos keldi ✓</span>
+                </label>
+                <div class="relative">
+                    <input type="password" id="reg-pwd-confirm" name="password_confirm"
+                           class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500 transition-all"
+                           placeholder="Parolni qayta kiriting (yoki bo'sh qoldiring)" data-i18n-placeholder="reg_pwd_confirm_placeholder">
+                    <button type="button" onclick="togglePassVisibility('reg-pwd-confirm', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors" title="Parolni ko'rsatish">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Optional Email & Phone Accordion / Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center">
+                        <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400 mr-1.5"></i>
+                        <span data-i18n="reg_email_label">Email (Ixtiyoriy)</span>
+                    </label>
+                    <input type="email" name="email" value="{{ email|default:'' }}"
+                           class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 placeholder-slate-600 transition-all"
+                           placeholder="user@example.com">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center">
+                        <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 mr-1.5"></i>
+                        <span data-i18n="reg_phone_label">Telefon (Ixtiyoriy)</span>
+                    </label>
+                    <input type="tel" name="phone" value="{{ phone|default:'' }}"
+                           class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 placeholder-slate-600 transition-all"
+                           placeholder="+998 90 123 45 67">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center justify-between">
+                    <span class="flex items-center">
+                        <i data-lucide="link" class="w-3.5 h-3.5 text-cyan-400 mr-1.5"></i>
+                        <span data-i18n="reg_trade_label">Steam Trade URL (Ixtiyoriy)</span>
+                    </span>
+                    <a href="https://steamcommunity.com/my/tradeoffers/privacy" target="_blank" class="text-[10px] text-cyan-400 hover:underline">
+                        URL qayerda?
+                    </a>
+                </label>
+                <input type="url" name="steam_trade_url" value="{{ steam_trade_url|default:'' }}"
+                       class="w-full bg-[#080a14] border border-indigo-500/30 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400 placeholder-slate-700 transition-all"
+                       placeholder="https://steamcommunity.com/tradeoffer/new/?partner=...">
+            </div>
+
+            <button type="submit" class="btn-gold w-full py-3.5 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-2 shadow-xl shadow-cyan-500/20 transition-all active:scale-[0.98]">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span data-i18n="reg_btn_submit">Ro'yxatdan o'tish (+100$ Bonus)</span>
+            </button>
+        </form>
+
+        <div class="relative z-10 pt-4 border-t border-indigo-500/20 text-center text-xs text-slate-400">
+            <span data-i18n="reg_have_account">Allaqachon hisobingiz bormi?</span>
+            <a href="{% url 'store:login' %}" class="font-bold text-cyan-400 hover:text-cyan-300 ml-1.5 transition-colors underline decoration-cyan-400/40" data-i18n="reg_link_login">
+                Kirish
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        input.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+    }
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// Live matching feedback
+const pwdMain = document.getElementById('reg-pwd');
+const pwdConf = document.getElementById('reg-pwd-confirm');
+const matchHint = document.getElementById('pwd-match-hint');
+
+if (pwdMain && pwdConf) {
+    function checkMatching() {
+        if (!pwdConf.value) {
+            matchHint.classList.add('hidden');
+            return;
+        }
+        if (pwdMain.value === pwdConf.value) {
+            matchHint.classList.remove('hidden');
+            matchHint.innerText = 'Mos keldi ✓';
+            matchHint.className = 'text-[10px] text-emerald-400 font-semibold';
+        } else {
+            matchHint.classList.remove('hidden');
+            matchHint.innerText = 'Mos kelmadi ✗';
+            matchHint.className = 'text-[10px] text-rose-400 font-semibold';
+        }
+    }
+    pwdMain.addEventListener('input', checkMatching);
+    pwdConf.addEventListener('input', checkMatching);
+}
+</script>
+{% endblock %}

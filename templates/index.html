@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Skinly - Keys Ochish</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+
+    <!-- Header / Balans -->
+    <header class="flex justify-between items-center px-8 py-4 bg-slate-800 border-b border-slate-700">
+        <h1 class="text-2xl font-bold text-amber-400">Skinly.uz</h1>
+        <div class="flex items-center gap-4">
+            {% if user.is_authenticated %}
+                <span>Salom, <b>{{ user.username }}</b></span>
+                <span class="bg-slate-700 px-4 py-2 rounded-lg text-green-400 font-bold">
+                    Balans: <span id="user-balance">{{ user.profile.balance }}</span> so'm
+                </span>
+                <a href="/admin/" class="text-sm bg-blue-600 px-3 py-1 rounded">Admin</a>
+            {% else %}
+                <a href="/admin/login/" class="bg-green-600 px-4 py-2 rounded font-bold">Kirish</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Asosiy qism: Keyslar -->
+    <main class="max-w-6xl mx-auto p-6">
+        <h2 class="text-xl font-semibold mb-6">Mavjud Keyslar</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for case in cases %}
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 text-center flex flex-col items-center">
+                    {% if case.image %}
+                        <img src="{{ case.image.url }}" alt="{{ case.name }}" class="h-32 object-contain mb-4">
+                    {% endif %}
+                    <h3 class="text-lg font-bold">{{ case.name }}</h3>
+                    <p class="text-amber-400 font-semibold my-2">{{ case.price }} so'm</p>
+                    <button onclick="openCase('{{ case.id }}')" class="mt-auto w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 rounded-lg transition">
+                        Ochish
+                    </button>
+                </div>
+            {% empty %}
+                <div class="md:col-span-3 bg-slate-800/80 border border-slate-700 rounded-2xl p-8 sm:p-12 text-center">
+                    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-400">
+                        <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                            <path d="m3 7 9-4 9 4-9 4-9-4Z"></path>
+                            <path d="M3 7v10l9 4 9-4V7M12 11v10"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Hozircha keyslar mavjud emas</h3>
+                    <p class="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-400">
+                        Keyslar ro'yxati hozircha bo'sh. Admin panelida avval buyumlar, so'ng ular uchun keys yarating.
+                    </p>
+                    <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                        <a href="/admin/main/item/add/" class="rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-500">
+                            Buyum qo'shish
+                        </a>
+                        <a href="/admin/main/case/add/" class="rounded-lg bg-amber-500 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-400">
+                            Keys qo'shish
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Natija chiqadigan joy -->
+        <div id="result-box" class="mt-10 p-6 bg-slate-800 rounded-xl text-center hidden">
+            <h3 class="text-xl font-bold mb-2 text-green-400">Tabriklaymiz, yutib oldingiz!</h3>
+            <div id="item-info" class="flex flex-col items-center">
+                <!-- Serverdan kelgan item shu yerga chiqadi -->
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript: Keys ochish sorovi va animatsiya -->
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        function openCase(caseId) {
+            const resultBox = document.getElementById('result-box');
+            const itemInfo = document.getElementById('item-info');
+            
+            // Ochish jarayoni ketayotganini ko'rsatish
+            resultBox.classList.remove('hidden');
+            itemInfo.innerHTML = `<p class="text-amber-400 animate-pulse text-lg">Keys ochilmoqda...</p>`;
+
+            fetch(`/open/${caseId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Balansni yangilash
+                    document.getElementById('user-balance').innerText = data.new_balance;
+                    
+                    // Yutuqni chiqarish (1 sekundlik kechikish bilan)
+                    setTimeout(() => {
+                        itemInfo.innerHTML = `
+                            <img src="${data.item_image}" class="h-28 object-contain mb-2 transition-transform transform scale-110">
+                            <p class="text-xl font-bold text-green-400">${data.item_name}</p>
+                            <p class="text-amber-400 font-semibold mt-1">${data.item_price} so'm</p>
+                        `;
+                    }, 1000);
+                } else {
+                    resultBox.classList.add('hidden');
+                    alert(data.error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,959 @@
+{% extends 'demo/base.html' %}
+{% load static %}
+{% load l10n %}
+{% block title %}{{ section_title }} — Skinly Demo Arena{% endblock %}
+{% block page_label %}{{ section_title }}{% endblock %}
+
+{% block content %}
+{% if active_section != 'upgrade' %}
+<section class="page-intro">
+  <div>
+    <span class="eyebrow">SKINLY GAMING PLATFORM</span>
+    <h1>{{ section_title }}</h1>
+    <p>{{ section_description }}</p>
+  </div>
+  <div class="intro-chips">
+    <span class="demo-chip"><span class="pulse-dot"></span> NO CASH VALUE · SAFE SIMULATION</span>
+  </div>
+</section>
+{% endif %}
+
+{% if active_section == 'upgrade' %}
+<!-- Upgrade Protocol Laboratory -->
+<section class="upgrade-lab-page">
+  <header class="upgrade-lab-heading">
+    <div>
+      <span class="eyebrow">SKINLY // SIMULATION LAB</span>
+      <h1>UPGRADE <span class="gradient-text">PROTOCOL</span></h1>
+      <p>Select a demo skin from your inventory and a target from the showcase vault. Multipliers change simulation odds only; items have no real-world value.</p>
+    </div>
+    <span class="demo-chip"><span class="pulse-dot"></span> DEMO SYSTEM ONLINE</span>
+  </header>
+
+  <form method="post" action="{% url 'store:demo_action' %}" data-demo-form data-animation="upgrade" data-duration="4800" class="upgrade-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="upgrade">
+    <input type="hidden" name="request_id" value="{{ request_id }}">
+    <input type="hidden" name="source_id" data-selection-input="source">
+    <input type="hidden" name="target_id" data-selection-input="target">
+    <input type="hidden" name="multiplier" value="1.5" data-upgrade-multiplier-value>
+
+    <div class="upgrade-workbench">
+      <section class="lab-skin-panel" data-side="source">
+        <div class="lab-panel-label">01 / YOUR ITEM <span>INVENTORY SKIN</span></div>
+        <div class="lab-skin-art">
+          <span class="lab-empty-art" data-selection-placeholder="source">＋</span>
+          <img data-selection-image="source" alt="" hidden onerror="this.onerror=null;this.src='/static/images/placeholder.svg'">
+        </div>
+        <h2 class="lab-skin-name" data-selection-name="source">Select your item</h2>
+        <div class="lab-skin-meta">
+          <span data-selection-rarity="source">Available demo skin</span>
+          <strong data-selection-value="source">— demo points</strong>
+        </div>
+        <button class="lab-select-button" type="button" data-picker-open="source">CHOOSE INVENTORY SKIN</button>
+      </section>
+
+      <div class="lab-reactor" data-upgrade-reactor aria-label="Upgrade success and failure probability">
+        <div class="upgrade-odds-wheel" data-upgrade-ring data-ready="false" aria-hidden="true">
+          <span class="upgrade-wheel-inner"></span>
+        </div>
+        <div class="upgrade-pointer-track" aria-hidden="true">
+          <span class="upgrade-wheel-pointer" data-upgrade-pointer>
+            <span class="upgrade-pointer-tip"></span>
+          </span>
+        </div>
+        <div class="upgrade-wheel-hub" aria-hidden="true">
+          <span data-upgrade-indicator>⚡</span>
+        </div>
+        <span class="lab-reactor-caption">SERVER-RESOLVED<br>DEMO OUTCOME</span>
+      </div>
+
+      <section class="lab-skin-panel" data-side="target">
+        <div class="lab-panel-label">02 / TARGET <span>SHOWCASE VAULT</span></div>
+        <div class="lab-skin-art">
+          <span class="lab-empty-art" data-selection-placeholder="target">◇</span>
+          <img data-selection-image="target" alt="" hidden onerror="this.onerror=null;this.src='/static/images/placeholder.svg'">
+        </div>
+        <h2 class="lab-skin-name" data-selection-name="target">Select a target</h2>
+        <div class="lab-skin-meta">
+          <span data-selection-rarity="target">Demo gallery item</span>
+          <strong data-selection-value="target">— demo points</strong>
+        </div>
+        <button class="lab-select-button" type="button" data-picker-open="target">CHOOSE TARGET SKIN</button>
+      </section>
+    </div>
+
+    <section class="lab-controls">
+      <div class="lab-controls-top">
+        <span>SIMULATION MULTIPLIER</span>
+        <strong>SUCCESS ODDS <span data-upgrade-chance>—</span></strong>
+      </div>
+      <div class="lab-multipliers" role="group" aria-label="Demo upgrade multiplier">
+        <button class="lab-multiplier" type="button" data-multiplier="1.5" aria-pressed="true">X1.5</button>
+        <button class="lab-multiplier" type="button" data-multiplier="2" aria-pressed="false">X2</button>
+        <button class="lab-multiplier" type="button" data-multiplier="5" aria-pressed="false">X5</button>
+        <button class="lab-multiplier" type="button" data-multiplier="10" aria-pressed="false">X10</button>
+      </div>
+      <div class="lab-odds-legend" aria-live="polite">
+        <span class="lab-odds-success"><strong data-upgrade-success>—%</strong> SUCCESS</span>
+        <span class="lab-odds-fail"><strong data-upgrade-fail>—%</strong> FAIL</span>
+      </div>
+      <button class="lab-upgrade-button button-primary" type="submit" disabled>
+        <span data-button-label>SELECT BOTH SKINS TO CONTINUE</span>
+      </button>
+      <div class="lab-aux-buttons">
+        <button class="reset-upgrade" type="reset" data-upgrade-reset>↺ &nbsp; Reset selection</button>
+        {% if not inventory %}
+        <button class="button button-quiet button-small" type="button" data-get-starter>✦ Get Starter Skin to Test</button>
+        {% endif %}
+      </div>
+      <p class="lab-demo-note">A failed attempt safely keeps your source skin in inventory. The server determines each outcome; 75% indicates an approximate long-run chance, not a guarantee. No balance is spent and items have no cash or Steam value.</p>
+    </section>
+  </form>
+
+  {% if not inventory %}
+  <div class="lab-inventory-empty panel">
+    <p>Your demo inventory is empty. <a href="{% url 'store:demo_cases' %}">Open a case</a> or get a complimentary demo skin to start upgrading.</p>
+    <button class="button button-primary button-small" type="button" data-get-starter>✦ Get Test Skin (+Instant Drop)</button>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Item Selector Dialog -->
+<dialog class="picker-dialog panel" data-item-picker>
+  <div class="picker-header">
+    <div>
+      <span class="eyebrow">DEMO ITEM SELECTOR</span>
+      <h2>Choose an item</h2>
+    </div>
+    <button class="icon-button" type="button" data-picker-close aria-label="Close">×</button>
+  </div>
+  <div class="picker-filters">
+    <label class="search-field">
+      <span>⌕</span>
+      <input type="search" data-picker-search placeholder="Search item names..." maxlength="100">
+    </label>
+    <select data-picker-rarity aria-label="Filter item rarity">
+      <option value="">All rarities</option>
+      <option value="common">Common</option>
+      <option value="rare">Rare</option>
+      <option value="epic">Epic</option>
+      <option value="legendary">Legendary</option>
+    </select>
+  </div>
+  <div class="picker-grid">
+    {% for entry in inventory %}
+    <button class="picker-item panel rarity-{{ entry.item.rarity }}" type="button" data-picker-item data-picker-side="source" data-id="{{ entry.pk }}" data-name="{{ entry.item.name }}" data-image="{% static entry.item.image %}" data-value="{{ entry.item.demo_value|unlocalize }}" data-rarity="{{ entry.item.rarity }}" data-rarity-label="{{ entry.item.get_rarity_display }}">
+      <img src="{% static entry.item.image %}" loading="lazy" alt="{{ entry.item.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      <strong>{{ entry.item.name }}</strong>
+      <small>Owned · {{ entry.item.demo_value }} credits</small>
+    </button>
+    {% empty %}
+    <p class="empty-message" data-no-source>You have no demo skins in your inventory. Preview a case to get started.</p>
+    {% endfor %}
+    {% for item in items %}
+    <button class="picker-item panel rarity-{{ item.rarity }}" type="button" data-picker-item data-picker-side="target" data-id="{{ item.pk }}" data-name="{{ item.name }}" data-image="{% static item.image %}" data-value="{{ item.demo_value|unlocalize }}" data-rarity="{{ item.rarity }}" data-rarity-label="{{ item.get_rarity_display }}">
+      <img src="{% static item.image %}" loading="lazy" alt="{{ item.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      <strong>{{ item.name }}</strong>
+      <small>{{ item.demo_value }} credits</small>
+    </button>
+    {% endfor %}
+  </div>
+</dialog>
+
+{% elif active_section == 'battles' %}
+<!-- CS2 Pro Head-to-Head Case Battle Arena -->
+<section class="battle-stage panel" data-battle-stage>
+  <div class="battle-head">
+    <div>
+      <span class="eyebrow">4 ROUNDS · HEAD-TO-HEAD BATTLE ARENA</span>
+      <h2>Simulated Case Battle</h2>
+      <p>Watch simulated 1v1 round drops with an AI opponent. Both sides open simultaneously — highest total drop value wins the match!</p>
+    </div>
+    <div class="battle-head-badges">
+      <span class="demo-chip"><span class="pulse-dot"></span> LIVE PVP ENGINE</span>
+      <button type="button" class="battle-speed-pill" data-battle-speed-toggle title="Speed up animation" aria-pressed="false">
+        ⚡ <span>Fast Mode: OFF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Battle HUD: Players & VS Pillar -->
+  <div class="battle-players">
+    <div class="player-tile player-user" data-hud-player>
+      <div class="player-avatar-wrap">
+        <span class="avatar avatar-violet">{{ user.username|slice:":1"|upper|default:"P" }}</span>
+        <span class="player-role-badge">YOU</span>
+      </div>
+      <div class="player-info">
+        <strong>{{ user.username|default:"Player" }}</strong>
+        <small>DEMO FIGHTER</small>
+      </div>
+      <div class="player-score-box">
+        <div class="score-row">
+          <small>RUNNING TOTAL</small>
+          <span class="score-delta" data-player-delta></span>
+        </div>
+        <span class="score-val" data-battle-player-score>0.00 credits</span>
+      </div>
+    </div>
+
+    <div class="battle-versus-badge">
+      <div class="battle-timeline-stepper" data-battle-stepper aria-label="Round progression">
+        <span class="step-dot is-active" data-step-dot="1">1</span>
+        <span class="step-connector"></span>
+        <span class="step-dot" data-step-dot="2">2</span>
+        <span class="step-connector"></span>
+        <span class="step-dot" data-step-dot="3">3</span>
+        <span class="step-connector"></span>
+        <span class="step-dot" data-step-dot="4">4</span>
+      </div>
+      <div class="vs-glow-text">VS</div>
+      <div class="battle-live-status-pill" data-battle-status-pill>READY TO BATTLE</div>
+    </div>
+
+    <div class="player-tile player-bot" data-hud-bot>
+      <div class="player-avatar-wrap">
+        <span class="avatar avatar-cyan">AI</span>
+        <span class="player-role-badge bot">BOT</span>
+      </div>
+      <div class="player-info">
+        <strong data-bot-display-name>Nova (Bot)</strong>
+        <small>SIMULATED OPPONENT</small>
+      </div>
+      <div class="player-score-box">
+        <div class="score-row">
+          <small>RUNNING TOTAL</small>
+          <span class="score-delta" data-bot-delta></span>
+        </div>
+        <span class="score-val" data-battle-bot-score>0.00 credits</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Active Round Arena Showcase (Dual Reels & Simultaneous Case Opening) -->
+  <div class="battle-live-arena" data-battle-live-arena>
+    <!-- Left: Player Showcase Stage -->
+    <div class="arena-side arena-side-player" data-player-stage>
+      <div class="stage-tag-bar">
+        <span class="stage-tag player-tag">{{ user.username|default:"Player" }}</span>
+        <span class="stage-case-name" data-player-case-label>CS2 Weapon Case</span>
+      </div>
+
+      <div class="stage-display-container">
+        <!-- 1. Closed Case Intro Pod -->
+        <div class="stage-case-box" data-player-case-box>
+          <div class="case-halo"></div>
+          <img class="case-visual" data-player-case-img src="{% static 'demo/cases/arcane-cyber-cache.svg' %}" alt="Case" onerror="this.src='{% static 'images/placeholder.svg' %}'">
+          <div class="case-glow-burst"></div>
+          <span class="case-state-text" data-player-case-state>READY</span>
+        </div>
+
+        <!-- 2. Roulette Reel Window -->
+        <div class="stage-roulette-window" data-player-roulette-window hidden>
+          <div class="roulette-crosshair top"></div>
+          <div class="roulette-crosshair bottom"></div>
+          <div class="roulette-track-viewport">
+            <div class="roulette-track" data-player-roulette-track></div>
+          </div>
+        </div>
+
+        <!-- 3. Revealed Item Card -->
+        <div class="stage-reveal-card" data-player-reveal-card hidden>
+          <div class="reveal-rarity-beam"></div>
+          <img class="reveal-item-img" data-player-reveal-img src="{% static 'images/placeholder.svg' %}" alt="Revealed Item" onerror="this.src='{% static 'images/placeholder.svg' %}'">
+          <div class="reveal-item-details">
+            <span class="reveal-rarity-tag" data-player-reveal-rarity>Rarity</span>
+            <strong class="reveal-name" data-player-reveal-name>Skin Name</strong>
+            <span class="reveal-value" data-player-reveal-val>0.00 credits</span>
+          </div>
+          <div class="reveal-round-stamp" data-player-round-stamp></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Arena Round Dial / Status -->
+    <div class="arena-center-pillar">
+      <div class="arena-round-number" data-arena-round-number>ROUND 01 / 04</div>
+      <div class="arena-stage-hint" data-arena-stage-hint>Dual Cases Ready</div>
+      <div class="arena-round-outcome-banner" data-arena-outcome-banner hidden></div>
+    </div>
+
+    <!-- Right: Opponent Showcase Stage -->
+    <div class="arena-side arena-side-bot" data-bot-stage>
+      <div class="stage-tag-bar">
+        <span class="stage-tag bot-tag" data-bot-stage-tag>Nova (Bot)</span>
+        <span class="stage-case-name" data-bot-case-label>CS2 Weapon Case</span>
+      </div>
+
+      <div class="stage-display-container">
+        <!-- 1. Closed Case Intro Pod -->
+        <div class="stage-case-box" data-bot-case-box>
+          <div class="case-halo"></div>
+          <img class="case-visual" data-bot-case-img src="{% static 'demo/cases/arcane-cyber-cache.svg' %}" alt="Case" onerror="this.src='{% static 'images/placeholder.svg' %}'">
+          <div class="case-glow-burst"></div>
+          <span class="case-state-text" data-bot-case-state>READY</span>
+        </div>
+
+        <!-- 2. Roulette Reel Window -->
+        <div class="stage-roulette-window" data-bot-roulette-window hidden>
+          <div class="roulette-crosshair top"></div>
+          <div class="roulette-crosshair bottom"></div>
+          <div class="roulette-track-viewport">
+            <div class="roulette-track" data-bot-roulette-track></div>
+          </div>
+        </div>
+
+        <!-- 3. Revealed Item Card -->
+        <div class="stage-reveal-card" data-bot-reveal-card hidden>
+          <div class="reveal-rarity-beam"></div>
+          <img class="reveal-item-img" data-bot-reveal-img src="{% static 'images/placeholder.svg' %}" alt="Revealed Item" onerror="this.src='{% static 'images/placeholder.svg' %}'">
+          <div class="reveal-item-details">
+            <span class="reveal-rarity-tag" data-bot-reveal-rarity>Rarity</span>
+            <strong class="reveal-name" data-bot-reveal-name>Skin Name</strong>
+            <span class="reveal-value" data-bot-reveal-val>0.00 credits</span>
+          </div>
+          <div class="reveal-round-stamp" data-bot-round-stamp></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Round Cards Grid (Progression & Drop History) -->
+  <div class="round-track battle-grid-track" data-battle-rounds>
+    <div class="round-card" data-round-slot="1">
+      <div class="round-header">ROUND 01</div>
+      <div class="round-drops-wrap">
+        <div class="round-drop-player" data-drop-player>
+          <span class="drop-placeholder">?</span>
+        </div>
+        <div class="round-divider">:</div>
+        <div class="round-drop-bot" data-drop-bot>
+          <span class="drop-placeholder">?</span>
+        </div>
+      </div>
+      <span class="round-status">Ready</span>
+    </div>
+    <div class="round-card" data-round-slot="2">
+      <div class="round-header">ROUND 02</div>
+      <div class="round-drops-wrap">
+        <div class="round-drop-player" data-drop-player>
+          <span class="drop-placeholder">?</span>
+        </div>
+        <div class="round-divider">:</div>
+        <div class="round-drop-bot" data-drop-bot>
+          <span class="drop-placeholder">?</span>
+        </div>
+      </div>
+      <span class="round-status">Pending</span>
+    </div>
+    <div class="round-card" data-round-slot="3">
+      <div class="round-header">ROUND 03</div>
+      <div class="round-drops-wrap">
+        <div class="round-drop-player" data-drop-player>
+          <span class="drop-placeholder">?</span>
+        </div>
+        <div class="round-divider">:</div>
+        <div class="round-drop-bot" data-drop-bot>
+          <span class="drop-placeholder">?</span>
+        </div>
+      </div>
+      <span class="round-status">Pending</span>
+    </div>
+    <div class="round-card" data-round-slot="4">
+      <div class="round-header">ROUND 04</div>
+      <div class="round-drops-wrap">
+        <div class="round-drop-player" data-drop-player>
+          <span class="drop-placeholder">?</span>
+        </div>
+        <div class="round-divider">:</div>
+        <div class="round-drop-bot" data-drop-bot>
+          <span class="drop-placeholder">?</span>
+        </div>
+      </div>
+      <span class="round-status">Pending</span>
+    </div>
+  </div>
+
+  <!-- Start Battle Form & Action Row -->
+  <form method="post" action="{% url 'store:demo_action' %}" data-demo-form data-animation="battle" class="battle-start-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="battle">
+    <input type="hidden" name="request_id" value="{{ request_id }}" data-battle-request-id>
+    <div class="battle-controls-cluster">
+      <button class="button button-primary button-wide battle-start-button" type="submit" data-battle-submit-btn>
+        <span data-button-label>⚔ &nbsp; Start Case Battle (Free Demo)</span>
+      </button>
+      <button class="button button-quiet battle-skip-action" type="button" data-battle-skip-action hidden>
+        ⏩ Skip to End
+      </button>
+    </div>
+  </form>
+
+  <script id="battle-pool-data" type="application/json">
+    {{ all_items_json|default:"[]"|safe }}
+  </script>
+  <script id="battle-cases-data" type="application/json">
+    {{ cases_json|default:"[]"|safe }}
+  </script>
+</section>
+
+
+{% elif active_section == 'contracts' %}
+<!-- Trade-Up Contracts -->
+<section class="contract-stage panel">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">3–10 OWNED ITEMS · NO BALANCE SPENT</span>
+      <h2>Trade-Up Contract Protocol</h2>
+      <p>Select between 3 and 10 items from your inventory. The server will safely combine them and award an upgraded skin!</p>
+    </div>
+    <span class="stat-pill" data-contract-count>0 / 10 selected (minimum 3)</span>
+  </div>
+
+  <form method="post" action="{% url 'store:demo_action' %}" data-demo-form data-animation="contract">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="contract">
+    <input type="hidden" name="request_id" value="{{ request_id }}">
+
+    <div class="contract-grid">
+      {% for entry in inventory %}
+      <label class="contract-item panel rarity-{{ entry.item.rarity }}">
+        <input type="checkbox" name="inventory_ids" value="{{ entry.pk }}" data-contract-item>
+        <img src="{% static entry.item.image %}" loading="lazy" alt="{{ entry.item.name }}" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+        <strong>{{ entry.item.name }}</strong>
+        <small>{{ entry.item.demo_value }} demo credits · owned</small>
+        <span class="check-indicator">✓</span>
+      </label>
+      {% empty %}
+      <div class="empty-state panel full-width">
+        <span>◈</span>
+        <h2>Your demo inventory is empty</h2>
+        <p>Open cases or claim a starter skin to collect items for Trade-Up contracts.</p>
+        <div class="empty-actions">
+          <a class="button button-primary" href="{% url 'store:demo_cases' %}">Open Cases</a>
+          <button class="button button-quiet" type="button" data-get-starter>✦ Get Starter Skin</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if inventory %}
+    <div class="action-row contract-actions">
+      <span data-contract-count-label>Select 3 to 10 skins to initiate contract</span>
+      <button class="button button-primary" type="submit" disabled data-contract-submit>
+        <span data-button-label>◈ &nbsp; Execute Trade-Up Contract</span>
+      </button>
+    </div>
+    {% endif %}
+  </form>
+</section>
+
+{% elif active_section == 'daily-rewards' %}
+<!-- Daily Streak Rewards -->
+<section class="daily-stage panel">
+  <div class="daily-orb">✦</div>
+  <span class="eyebrow">STREAK {{ recent_claims|length }} / 7 DAYS</span>
+  <h2>{% if claimed_today %}You claimed today's demo XP!{% else %}A little XP for showing up{% endif %}</h2>
+  <p>Earn +10 non-monetary demo XP every day. Level up your demo player rank!</p>
+
+  <div class="streak-calendar">
+    {% for claim in recent_claims %}
+    <div class="streak-day active">
+      <span>✦</span>
+      <small>{{ claim.claimed_on|date:"D" }}</small>
+    </div>
+    {% empty %}
+    <div class="streak-day"><span>1</span><small>DAY 1</small></div>
+    <div class="streak-day"><span>2</span><small>DAY 2</small></div>
+    <div class="streak-day"><span>3</span><small>DAY 3</small></div>
+    <div class="streak-day"><span>4</span><small>DAY 4</small></div>
+    <div class="streak-day"><span>5</span><small>DAY 5</small></div>
+    <div class="streak-day"><span>6</span><small>DAY 6</small></div>
+    <div class="streak-day"><span>7</span><small>DAY 7</small></div>
+    {% endfor %}
+  </div>
+
+  {% if not claimed_today %}
+  <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="claim_daily">
+    <button class="button button-primary" type="submit">✦ &nbsp; Claim Today's +10 XP</button>
+  </form>
+  {% else %}
+  <button class="button button-quiet" type="button" disabled>✓ Already claimed today</button>
+  {% endif %}
+</section>
+
+{% elif active_section == 'missions' %}
+<!-- Missions & Challenges -->
+<div class="mission-grid">
+  {% for mission in missions %}
+  <article class="mission-card panel">
+    <span class="mission-icon">🎯</span>
+    <span class="eyebrow">DEMO CHALLENGE</span>
+    <h2>{{ mission.title }}</h2>
+    <p>Reward: <strong>+{{ mission.xp }} demo XP</strong></p>
+    <div class="progress-track">
+      <span style="width:{% widthratio mission.progress mission.target 100 %}%"></span>
+    </div>
+    <div class="mission-progress">
+      <span>{{ mission.progress }} / {{ mission.target }} progress</span>
+      {% if mission.progress >= mission.target %}
+      <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="claim_mission">
+        <input type="hidden" name="mission" value="{% if forloop.counter == 1 %}cases{% elif forloop.counter == 2 %}simulations{% else %}explorer{% endif %}">
+        <button class="button button-primary button-small" type="submit">Claim +{{ mission.xp }} XP →</button>
+      </form>
+      {% else %}
+      <span class="status-chip in-progress">IN PROGRESS</span>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+{% elif active_section == 'leaderboard' %}
+<!-- Leaderboard -->
+<section class="leaderboard panel">
+  <div class="leaderboard-head">
+    <span>RANK</span>
+    <span>PLAYER</span>
+    <span>DEMO XP</span>
+    <span>ACTIVITY</span>
+  </div>
+  {% for leader in leaders %}
+  <div class="leaderboard-row">
+    <span class="rank-number {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">
+      #{{ forloop.counter|stringformat:"02d" }}
+    </span>
+    <span class="leader-user">
+      <span class="avatar">{{ leader.username|slice:":1"|upper }}</span>
+      <strong>{{ leader.username }}</strong>
+    </span>
+    <strong class="leader-xp">{{ leader.xp|default:0 }} XP</strong>
+    <span class="leader-actions">{{ leader.demo_score }} actions</span>
+  </div>
+  {% empty %}
+  <div class="empty-state">
+    <span>🏆</span>
+    <h2>No leaderboard scores yet</h2>
+    <p>Run demo activities to appear on this public scoreboard.</p>
+  </div>
+  {% endfor %}
+</section>
+
+{% elif active_section == 'collections' %}
+<!-- Curated Collections -->
+<div class="collection-grid">
+  {% for collection in collections %}
+  <article class="collection-card panel">
+    <div class="collection-art theme-{{ collection.theme|slugify }}">
+      <span>◇</span>
+      <small>{{ collection.item_count }} ITEMS</small>
+    </div>
+    <div class="collection-copy">
+      <span class="eyebrow">{{ collection.theme }}</span>
+      <h2>{{ collection.title }}</h2>
+      <p>{{ collection.description }}</p>
+      <div class="collection-items">
+        {% for item in collection.items.all|slice:":4" %}
+        <img src="{% static item.image %}" alt="{{ item.name }}" loading="lazy" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+        {% endfor %}
+      </div>
+      <a class="button button-quiet button-small" href="{% url 'store:demo_items' %}?theme={{ collection.theme|urlencode }}">Explore items →</a>
+    </div>
+  </article>
+  {% empty %}
+  <div class="empty-state panel">
+    <p>Curated demo collections are being prepared.</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% elif active_section == 'settings' %}
+<!-- Settings -->
+<section class="settings-panel panel">
+  <span class="eyebrow">ACCOUNT PREFERENCES</span>
+  <h2>Make the arena yours</h2>
+  <form method="post" action="{% url 'store:demo_action' %}" data-demo-form class="settings-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_settings">
+    <label>Display name
+      <input type="text" name="display_name" maxlength="30" value="{{ settings_obj.display_name }}" placeholder="{{ user.username }}">
+    </label>
+    <label>Profile bio
+      <textarea name="bio" rows="3" maxlength="500" placeholder="A few words about your loadout...">{{ profile.bio }}</textarea>
+    </label>
+    <label class="toggle-row">
+      <span><strong>Dark theme</strong><small>Keep your preferred arena appearance</small></span>
+      <span>
+        <input type="hidden" name="dark_theme_enabled" value="false">
+        <input type="checkbox" name="dark_theme_enabled" value="true" {% if settings_obj.dark_theme_enabled %}checked{% endif %}>
+      </span>
+    </label>
+    <label class="toggle-row">
+      <span><strong>Sound effects</strong><small>Audio click and spin feedback</small></span>
+      <span>
+        <input type="hidden" name="sound_enabled" value="false">
+        <input type="checkbox" name="sound_enabled" value="true" {% if settings_obj.sound_enabled %}checked{% endif %}>
+      </span>
+    </label>
+    <label class="toggle-row">
+      <span><strong>Animations</strong><small>Respect device reduced-motion preference</small></span>
+      <span>
+        <input type="hidden" name="animations_enabled" value="false">
+        <input type="checkbox" name="animations_enabled" value="true" {% if settings_obj.animations_enabled %}checked{% endif %}>
+      </span>
+    </label>
+    <label class="toggle-row">
+      <span><strong>Notifications</strong><small>Show account and new-content updates</small></span>
+      <span>
+        <input type="hidden" name="notifications_enabled" value="false">
+        <input type="checkbox" name="notifications_enabled" value="true" {% if settings_obj.notifications_enabled %}checked{% endif %}>
+      </span>
+    </label>
+    <button class="button button-primary" type="submit">
+      <span data-button-label>Save preferences</span>
+    </button>
+  </form>
+</section>
+
+{% elif active_section == 'profile' %}
+<!-- Profile -->
+<section class="profile-banner panel">
+  <div class="profile-avatar">{{ user.username|slice:":1"|upper }}</div>
+  <div>
+    <span class="eyebrow">DEMO PLAYER · LEVEL {{ profile.level }}</span>
+    <h2>{{ settings_obj.display_name|default:user.username }}</h2>
+    <p>@{{ user.username }} · Member since {{ user.date_joined|date:"M Y" }}</p>
+    <p>{{ profile.bio|default:"Add a short bio in settings to personalize your profile." }}</p>
+  </div>
+  <div class="profile-xp">
+    <strong>{{ profile.experience_points }}</strong>
+    <small>DEMO XP</small>
+    <small class="profile-balance-tag">{{ demo_wallet.balance|floatformat:2 }} credits</small>
+    <button class="button button-quiet button-small" type="button" data-topup-button style="margin-top:0.5rem;">+ Top-up Credits</button>
+  </div>
+</section>
+
+<div class="quick-stats">
+  <div class="stat-card panel">
+    <strong>{{ inventory_count }}</strong>
+    <span>Demo items</span>
+  </div>
+  <div class="stat-card panel">
+    <strong>{{ cases_opened_count }}</strong>
+    <span>Cases opened</span>
+  </div>
+  <div class="stat-card panel">
+    <strong>{{ favorite_count }}</strong>
+    <span>Favorites</span>
+  </div>
+</div>
+
+<section class="content-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">PRIVATE TO YOUR ACCOUNT</span>
+      <h2>Recent demo activity</h2>
+    </div>
+    <a class="button button-quiet button-small" href="{% url 'store:demo_settings' %}">Edit settings →</a>
+  </div>
+  {% include 'demo/activity_list.html' with activities=activities %}
+</section>
+
+{% elif active_section == 'favorites' %}
+<!-- Favorites -->
+<section class="content-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">YOUR PERSONAL SHORTLIST</span>
+      <h2>Saved cases</h2>
+    </div>
+  </div>
+  <div class="case-grid">
+    {% for favorite in case_favorites %}
+    <article class="case-card panel" data-case-card>
+      <a href="{% url 'store:demo_case_detail' slug=favorite.case.slug %}" class="case-art">
+        <img src="{% static favorite.case.cover_image %}" alt="{{ favorite.case.name }}" loading="lazy" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+        <span class="case-category">{{ favorite.case.theme }}</span>
+      </a>
+      <div class="case-card-copy">
+        <a href="{% url 'store:demo_case_detail' slug=favorite.case.slug %}">
+          <strong>{{ favorite.case.name }}</strong>
+        </a>
+        <span class="case-price">{{ favorite.case.demo_price }} credits</span>
+        <div class="case-card-actions">
+          <a class="button button-quiet button-small" href="{% url 'store:demo_case_detail' slug=favorite.case.slug %}">View case</a>
+          <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="favorite_case">
+            <input type="hidden" name="target_id" value="{{ favorite.case_id }}">
+            <button class="button button-quiet button-small favorite-button is-favorite" type="submit" data-favorite-button aria-pressed="true">♥ Remove</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <div class="empty-state panel full-width">
+      <span>★</span>
+      <h2>No saved cases yet</h2>
+      <p>Bookmark demo cases to build your personal shortlist.</p>
+      <a class="button button-primary" href="{% url 'store:demo_cases' %}">Browse cases</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">ITEM BOOKMARKS</span>
+      <h2>Saved showcase items</h2>
+    </div>
+  </div>
+  <div class="item-grid">
+    {% for favorite in item_favorites %}
+    <article class="item-card panel rarity-{{ favorite.item.rarity }}">
+      <a href="{% url 'store:demo_item_detail' slug=favorite.item.slug %}">
+        <img src="{% static favorite.item.image %}" alt="{{ favorite.item.name }}" loading="lazy" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      </a>
+      <span class="rarity-label">{{ favorite.item.get_rarity_display }}</span>
+      <a href="{% url 'store:demo_item_detail' slug=favorite.item.slug %}">
+        <strong>{{ favorite.item.name }}</strong>
+      </a>
+      <small>{{ favorite.item.demo_value }} demo credits</small>
+      <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="favorite_item">
+        <input type="hidden" name="target_id" value="{{ favorite.item_id }}">
+        <button class="button button-quiet button-small favorite-button is-favorite" type="submit" data-favorite-button aria-pressed="true">♥ Remove</button>
+      </form>
+    </article>
+    {% empty %}
+    <div class="empty-state panel full-width">
+      <p>No saved showcase items yet.</p>
+      <a href="{% url 'store:demo_items' %}" class="button button-quiet">Explore item gallery →</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% elif active_section == 'inventory' %}
+<!-- Inventory with Search, Filters and Instant Sell -->
+<div class="section-heading">
+  <div>
+    <span class="eyebrow">ACCOUNT-PRIVATE COLLECTION</span>
+    <h2>Demo inventory</h2>
+    <p class="inventory-balance">Demo balance: <strong><span data-demo-balance>{{ demo_wallet.balance|floatformat:2 }}</span> credits</strong></p>
+  </div>
+  <div class="inventory-header-actions">
+    <span class="stat-pill">{{ inventory|length }} items</span>
+    <button class="button button-quiet button-small" type="button" data-get-starter>✦ +1 Demo Skin</button>
+    <button class="button button-quiet button-small" type="button" data-topup-button>+ Top-up</button>
+  </div>
+</div>
+
+<form class="filter-bar panel" method="get">
+  <label class="search-field">
+    <span>⌕</span>
+    <input type="search" name="q" value="{{ inventory_query|default:'' }}" maxlength="100" placeholder="Search inventory skins..." aria-label="Search inventory">
+  </label>
+  <select name="rarity" aria-label="Filter inventory rarity">
+    <option value="">All rarities</option>
+    <option value="common" {% if inventory_rarity == 'common' %}selected{% endif %}>Common</option>
+    <option value="rare" {% if inventory_rarity == 'rare' %}selected{% endif %}>Rare</option>
+    <option value="epic" {% if inventory_rarity == 'epic' %}selected{% endif %}>Epic</option>
+    <option value="legendary" {% if inventory_rarity == 'legendary' %}selected{% endif %}>Legendary</option>
+  </select>
+  <select name="sort" aria-label="Sort inventory">
+    <option value="newest" {% if inventory_sort == 'newest' %}selected{% endif %}>Recently added</option>
+    <option value="name" {% if inventory_sort == 'name' %}selected{% endif %}>Name</option>
+    <option value="rarity" {% if inventory_sort == 'rarity' %}selected{% endif %}>Rarity</option>
+    <option value="value" {% if inventory_sort == 'value' %}selected{% endif %}>Demo value</option>
+  </select>
+  <button class="button button-primary button-small" type="submit">Filter</button>
+  {% if inventory_query or inventory_rarity or inventory_sort != 'newest' %}
+  <a class="button button-quiet button-small" href="{% url 'store:demo_inventory' %}">Clear</a>
+  {% endif %}
+</form>
+
+<div class="item-grid inventory-grid">
+  {% for entry in inventory %}
+  <article class="item-card panel rarity-{{ entry.item.rarity }}" data-inventory-card="{{ entry.pk }}">
+    <a class="inventory-item-link" href="{% url 'store:demo_item_detail' slug=entry.item.slug %}">
+      <img src="{% static entry.item.image %}" alt="{{ entry.item.name }}" loading="lazy" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+      <span class="rarity-label">{{ entry.item.get_rarity_display }}</span>
+      <strong>{{ entry.item.name }}</strong>
+      <small>{{ entry.item.demo_value }} demo credits · {{ entry.created_at|date:"M j, Y" }}</small>
+    </a>
+    <div class="inventory-actions">
+      <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="favorite_item">
+        <input type="hidden" name="target_id" value="{{ entry.item_id }}">
+        <button class="button button-quiet button-small favorite-button{% if entry.item.is_favorite %} is-favorite{% endif %}" type="submit" aria-pressed="{{ entry.item.is_favorite|yesno:'true,false' }}" data-favorite-button>
+          {% if entry.item.is_favorite %}♥ Saved{% else %}♡ Favorite{% endif %}
+        </button>
+      </form>
+      <form method="post" action="{% url 'store:demo_action' %}" data-demo-form data-animation="sell">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="inventory_sell">
+        <input type="hidden" name="inventory_id" value="{{ entry.pk }}">
+        <input type="hidden" name="request_id" value="{{ entry.sell_request_id }}">
+        <button class="button button-primary button-small" type="submit">
+          <span data-button-label>Sell for {{ entry.item.demo_value }}</span>
+        </button>
+      </form>
+      <button class="button button-quiet button-small" type="button" onclick="document.getElementById('steam-notice-dialog').showModal()">Steam</button>
+    </div>
+  </article>
+  {% empty %}
+  <div class="empty-state panel full-width">
+    <span>🎒</span>
+    <h2>Your demo inventory is empty</h2>
+    <p>Open a case using demo credits to add items here. Sell actions return demo credits immediately; no cash or tradable skins are involved.</p>
+    <div class="empty-actions">
+      <a class="button button-primary" href="{% url 'store:demo_cases' %}">Browse cases</a>
+      <button class="button button-quiet" type="button" data-get-starter>✦ Get Starter Skin</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% elif active_section == 'history' %}
+<!-- History -->
+<section class="timeline panel">
+  <span class="eyebrow">PRIVATE AUDIT LOG</span>
+  <h2>Recent activities</h2>
+  {% include 'demo/activity_list.html' with activities=activities %}
+</section>
+
+<section class="content-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">DEMO CREDIT LEDGER</span>
+      <h2>Balance activity</h2>
+    </div>
+  </div>
+  <div class="wallet-ledger panel">
+    {% for entry in wallet_transactions %}
+    <div class="ledger-row">
+      <span>{{ entry.get_transaction_type_display }}{% if entry.details.case_name %} · {{ entry.details.case_name }}{% elif entry.details.item_name %} · {{ entry.details.item_name }}{% elif entry.details.note %} · {{ entry.details.note }}{% endif %}</span>
+      <strong class="{% if entry.amount > 0 %}credit-positive{% else %}credit-negative{% endif %}">
+        {% if entry.amount > 0 %}+{% endif %}{{ entry.amount }} credits
+      </strong>
+      <small>Balance {{ entry.balance_after }} · {{ entry.created_at|date:"M j, Y · H:i" }}</small>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <p>No demo credit transactions yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% elif active_section == 'notifications' %}
+<!-- Notifications -->
+<section class="notification-list panel">
+  {% for notification in notifications %}
+  <article class="notification-row{% if notification.is_read %} is-read{% endif %}">
+    <span class="notification-icon">🔔</span>
+    <div>
+      <strong>{{ notification.title }}</strong>
+      <p>{{ notification.message }}</p>
+      <small>{{ notification.created_at|date:"M j, Y · H:i" }}</small>
+    </div>
+    {% if not notification.is_read %}
+    <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+      {% csrf_token %}
+      <input type="hidden" name="action" value="read_notification">
+      <input type="hidden" name="notification_id" value="{{ notification.pk }}">
+      <button class="button button-quiet button-small" type="submit">Mark read</button>
+    </form>
+    {% else %}
+    <span class="read-label">✓ Read</span>
+    {% endif %}
+  </article>
+  {% empty %}
+  <div class="empty-state">
+    <span>🔔</span>
+    <h2>You're all caught up</h2>
+    <p>New personal account and demo content updates will appear here.</p>
+  </div>
+  {% endfor %}
+</section>
+
+{% elif active_section == 'items' %}
+<!-- Items Catalog / Demo Marketplace -->
+<form class="filter-bar panel" method="get">
+  <label class="search-field">
+    <span>⌕</span>
+    <input type="search" name="q" value="{{ item_query }}" maxlength="100" placeholder="Search demo items..." aria-label="Search demo items">
+  </label>
+  <select name="theme" aria-label="Filter demo items by theme">
+    <option value="">All themes</option>
+    {% for theme in themes %}
+    <option value="{{ theme }}" {% if selected_theme == theme %}selected{% endif %}>{{ theme|title }}</option>
+    {% endfor %}
+  </select>
+  <select name="rarity" aria-label="Filter demo items by rarity">
+    <option value="">All rarities</option>
+    <option value="common" {% if selected_rarity == 'common' %}selected{% endif %}>Common</option>
+    <option value="rare" {% if selected_rarity == 'rare' %}selected{% endif %}>Rare</option>
+    <option value="epic" {% if selected_rarity == 'epic' %}selected{% endif %}>Epic</option>
+    <option value="legendary" {% if selected_rarity == 'legendary' %}selected{% endif %}>Legendary</option>
+  </select>
+  <input class="price-filter" type="number" name="min_price" min="0" step="0.01" value="{{ min_price }}" placeholder="Min value" aria-label="Minimum demo value">
+  <input class="price-filter" type="number" name="max_price" min="0" step="0.01" value="{{ max_price }}" placeholder="Max value" aria-label="Maximum demo value">
+  <select name="sort" aria-label="Sort demo items">
+    <option value="featured" {% if selected_sort == 'featured' %}selected{% endif %}>Featured</option>
+    <option value="value_low" {% if selected_sort == 'value_low' %}selected{% endif %}>Value: low to high</option>
+    <option value="value_high" {% if selected_sort == 'value_high' %}selected{% endif %}>Value: high to low</option>
+    <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Name</option>
+  </select>
+  <button class="button button-primary button-small" type="submit">Apply filters</button>
+  <a class="button button-quiet button-small" href="{% url 'store:demo_items' %}">Clear filters</a>
+</form>
+
+{% if filter_error %}
+<p class="form-error" role="alert">{{ filter_error }}</p>
+{% endif %}
+
+<div class="item-grid">
+  {% for item in items %}
+  <article class="item-card panel rarity-{{ item.rarity }}">
+    <a href="{% url 'store:demo_item_detail' slug=item.slug %}">
+      <img src="{% static item.image %}" alt="{{ item.name }}" loading="lazy" onerror="this.onerror=null;this.src='{% static 'images/placeholder.svg' %}'">
+    </a>
+    <span class="rarity-label">{{ item.get_rarity_display }}</span>
+    <a href="{% url 'store:demo_item_detail' slug=item.slug %}">
+      <strong>{{ item.name }}</strong>
+    </a>
+    <small>{{ item.demo_value }} credits · no cash value</small>
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'store:demo_action' %}" data-demo-form>
+      {% csrf_token %}
+      <input type="hidden" name="action" value="favorite_item">
+      <input type="hidden" name="target_id" value="{{ item.pk }}">
+      <button type="submit" class="button button-quiet button-small favorite-button{% if item.is_favorite %} is-favorite{% endif %}" aria-pressed="{{ item.is_favorite|yesno:'true,false' }}" data-favorite-button>
+        {% if item.is_favorite %}♥ Saved{% else %}♡ Favorite{% endif %}
+      </button>
+    </form>
+    {% else %}
+    <a class="button button-quiet button-small" href="{% url 'store:login' %}?next={{ request.path|urlencode }}">Sign in to favorite</a>
+    {% endif %}
+  </article>
+  {% empty %}
+  <div class="empty-state panel full-width">
+    <span>⌕</span>
+    <h2>No showcase items match those filters</h2>
+    <p>Try another search or reset your filters.</p>
+    <a class="button button-quiet" href="{% url 'store:demo_items' %}">Clear filters</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
